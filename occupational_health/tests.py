@@ -727,6 +727,14 @@ class ExposureFactorTests(TestCase):
 
         self.assertContains(response, self.default_factor.name)
 
+    def test_category_labels_use_polish_characters(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('exposure_factor_list'))
+
+        self.assertContains(response, 'Py\u0142y')
+        self.assertContains(response, 'uci\u0105\u017cliwe')
+
     def test_user_sees_own_factors(self):
         self.client.force_login(self.user)
 

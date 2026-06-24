@@ -74,10 +74,10 @@ class Employee(models.Model):
 class ExposureFactor(models.Model):
     class Category(models.TextChoices):
         PHYSICAL = 'PHYSICAL', 'Czynniki fizyczne'
-        DUST = 'DUST', 'Pyly'
+        DUST = 'DUST', 'Py\u0142y'
         CHEMICAL = 'CHEMICAL', 'Czynniki chemiczne'
         BIOLOGICAL = 'BIOLOGICAL', 'Czynniki biologiczne'
-        OTHER = 'OTHER', 'Inne czynniki, w tym niebezpieczne i uciazliwe'
+        OTHER = 'OTHER', 'Inne czynniki, w tym niebezpieczne i uci\u0105\u017cliwe'
 
     category = models.CharField(max_length=20, choices=Category.choices)
     name = models.CharField(max_length=200)
