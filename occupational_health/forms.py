@@ -116,7 +116,13 @@ class ReferralForm(forms.ModelForm):
         widgets = {
             'job_position': forms.TextInput(attrs={'maxlength': '150'}),
             'work_description': forms.Textarea(attrs={'maxlength': '3000', 'rows': '5'}),
-            'deadline': forms.DateInput(attrs={'type': 'date'}),
+            'deadline': forms.DateInput(attrs={
+                'type': 'text',
+                'maxlength': '10',
+                'pattern': r'\d{4}-\d{2}-\d{2}',
+                'placeholder': 'RRRR-MM-DD',
+                'inputmode': 'numeric',
+            }),
         }
 
     def __init__(self, *args, organization, **kwargs):
