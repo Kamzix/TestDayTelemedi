@@ -3,6 +3,10 @@
 <head>
     <meta charset="utf-8">
     <title>Skierowania</title>
+    <style>
+        table { table-layout: fixed; width: 100%; }
+        td, th, p { overflow-wrap: anywhere; }
+    </style>
 </head>
 <body>
     <main>
@@ -32,7 +36,18 @@
                             {% if referral.is_overdue %}<strong>PRZETERMINOWANE</strong>{% endif %}
                         </td>
                         <td>{{ referral.created_at }}</td>
-                        <td>{{ referral.get_status_display }}</td>
+                        <td>
+                            {{ referral.get_status_display }}
+                            <form method="post" action="{% url 'referral_status_update' referral.pk %}">
+                                {% csrf_token %}
+                                <select name="status">
+                                    {% for value, label in status_choices %}
+                                        <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit">Zmien</button>
+                            </form>
+                        </td>
                         <td>{{ referral.created_by.username }}</td>
                         <td>
                             <a href="{% url 'referral_detail' referral.pk %}">Szczegoly</a>

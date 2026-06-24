@@ -177,6 +177,28 @@
 - `HttpResponse` odpowiada `Response` w Symfony albo Laravelu.
 - Tenant-scoped query odpowiada scope albo query builderowi w PHP z warunkiem organizacji.
 
+## Walidacja, statusy i encoding
+
+- Walidacja modelu chroni reguly danych niezaleznie od wejscia, np. PESEL albo komplet daty urodzenia i dokumentu.
+- Walidacja formularza chroni konkretny request HTML, np. deadline, wymagany szablon i limity dlugosci.
+- Walidacja backendowa jest potrzebna przy dynamicznych polach POST, bo frontend i HTML mozna ominac.
+- `maxlength` w HTML pomaga uzytkownikowi, ale nie jest zabezpieczeniem. Atakujacy moze wyslac POST recznie.
+- Walidatory Django to funkcje lub reguly pol, ktore sprawdzaja dane i zwracaja czytelne bledy.
+- Status oparty o choices zabezpiecza sie przez formularz `ChoiceField`, ktory przyjmuje tylko dozwolone wartosci.
+- Zmiana statusu jest tylko POST, bo modyfikuje dane. GET nie powinien zmieniac stanu aplikacji.
+- Mojibake to popsute kodowanie tekstu, np. gdy UTF-8 zostanie odczytany jako inne kodowanie.
+- UTF-8 jest istotne, bo polskie znaki musza przejsc przez formularz, SQLite, XLSX, HTML i PDF bez utraty danych.
+- Negatywne testy sprawdzaja, ze bledne dane sa odrzucane, a nie tylko ze poprawny scenariusz dziala.
+- Limity dlugosci chronia UX, baze danych, tabele HTML i sklad PDF przed niekontrolowanie dlugimi wartosciami.
+
+## Mapowanie walidacji do PHP i React
+
+- Django validators odpowiadaja walidatorom requestu lub modelu w PHP.
+- Choices odpowiadaja enumom albo stalym domenowym.
+- Backend validation to walidacja niezalezna od frontendu, wymagana tak samo przy React i przy zwyklych formularzach.
+- UTF-8 audit odpowiada poprawnej konfiguracji encodingu w calym stacku: baza, backend, frontend, eksporty i PDF.
+- HTML `maxlength` to tylko pomoc UX, podobnie jak ograniczenie inputu w React. Backend musi sprawdzac to samo.
+
 ## Mozliwe pytania na rozmowie technicznej
 
 **Dlaczego Django, a nie Laravel?**  
@@ -259,3 +281,24 @@ PDF zawiera metadane i binarna strukture, ktore moga sie roznic miedzy uruchomie
 
 **Czym rozni sie skierowanie od orzeczenia?**  
 Skierowanie wystawia pracodawca, aby pracownik wykonal badania. Orzeczenie wystawia lekarz po badaniu i aplikacja go nie generuje.
+
+**Czym rozni sie walidacja modelu od walidacji formularza?**  
+Model pilnuje reguly danych ogolnie, a formularz pilnuje konkretnego wejscia od uzytkownika. Obie warstwy sie uzupelniaja.
+
+**Dlaczego `maxlength` w HTML nie wystarcza?**  
+Bo HTML mozna ominac, wysylajac request recznie. Limit musi byc sprawdzony po stronie backendu.
+
+**Jak zabezpieczyc status skierowania?**  
+Przyjmowac tylko wartosci z `choices`, walidowac je formularzem i pobierac skierowanie po organizacji uzytkownika.
+
+**Dlaczego testy negatywne sa wazne?**  
+Bo potwierdzaja, ze aplikacja odrzuca bledne albo cudze dane, a nie tylko dziala dla szczesliwej sciezki.
+
+**Czym jest mojibake?**  
+To widoczny efekt zlego kodowania, np. polskie znaki zamienione w przypadkowe symbole. Testy szukaja takich sekwencji regresyjnie.
+
+**Jak polskie znaki przechodza przez aplikacje?**  
+Sa wysylane z formularza jako UTF-8, zapisywane w SQLite, odczytywane do HTML, importowane z XLSX przez openpyxl i renderowane w PDF przez font TrueType.
+
+**Po co limity dlugosci pol?**  
+Chronia baze, widoki HTML i PDF przed zbyt dlugimi wartosciami oraz daja czytelne bledy uzytkownikowi.

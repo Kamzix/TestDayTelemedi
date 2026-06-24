@@ -31,6 +31,7 @@ from occupational_health.views import (
     referral_detail,
     referral_list,
     referral_pdf,
+    referral_status_update,
     referral_template_list,
 )
 
@@ -53,6 +54,7 @@ urlpatterns = [
     path('referrals/', referral_list, name='referral_list'),
     path('referrals/create/', referral_create, name='referral_create'),
     path('referrals/<int:pk>/pdf/', referral_pdf, name='referral_pdf'),
+    path('referrals/<int:pk>/status/', referral_status_update, name='referral_status_update'),
     path('referrals/<int:pk>/', referral_detail, name='referral_detail'),
     path('referral-templates/', referral_template_list, name='referral_template_list'),
     path('admin/', admin.site.urls),

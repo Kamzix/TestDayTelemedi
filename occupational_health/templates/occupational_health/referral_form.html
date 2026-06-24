@@ -3,6 +3,10 @@
 <head>
     <meta charset="utf-8">
     <title>Nowe skierowanie</title>
+    <style>
+        p, fieldset, textarea, input { overflow-wrap: anywhere; }
+        textarea { max-width: 100%; }
+    </style>
 </head>
 <body>
     <main>
@@ -39,11 +43,11 @@
                             </legend>
                             <p>
                                 <label for="exposure_description_{{ row.factor.pk }}">Opis narazenia</label>
-                                <textarea id="exposure_description_{{ row.factor.pk }}" name="exposure_description_{{ row.factor.pk }}">{{ row.description }}</textarea>
+                                <textarea id="exposure_description_{{ row.factor.pk }}" name="exposure_description_{{ row.factor.pk }}" maxlength="1000" rows="3">{{ row.description }}</textarea>
                             </p>
                             <p>
                                 <label for="measurement_result_{{ row.factor.pk }}">Wynik pomiaru</label>
-                                <input id="measurement_result_{{ row.factor.pk }}" name="measurement_result_{{ row.factor.pk }}" value="{{ row.measurement }}">
+                                <input id="measurement_result_{{ row.factor.pk }}" name="measurement_result_{{ row.factor.pk }}" maxlength="500" value="{{ row.measurement }}">
                             </p>
                         </fieldset>
                     {% empty %}

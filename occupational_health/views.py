@@ -13,6 +13,7 @@ from .forms import (
     ExposureFactorForm,
     HRUserCreationForm,
     ReferralForm,
+    ReferralStatusForm,
 )
 from .models import (
     Employee,
@@ -142,7 +143,7 @@ def exposure_factor_list(request):
 @login_required
 def exposure_factor_create(request):
     if request.method == 'POST':
-        form = ExposureFactorForm(request.POST)
+        form = ExposureFactorForm(request.POST, organization=request.user.organization)
         if form.is_valid():
             factor = form.save(commit=False)
             factor.is_default = False
@@ -151,7 +152,7 @@ def exposure_factor_create(request):
             factor.save()
             return redirect('exposure_factor_list')
     else:
-        form = ExposureFactorForm()
+        form = ExposureFactorForm(organization=request.user.organization)
 
     return render(request, 'occupational_health/exposure_factor_form.html', {
         'form': form,
@@ -178,6 +179,7 @@ def referral_list(request):
     ).select_related('employee', 'created_by')
     return render(request, 'occupational_health/referral_list.html', {
         'referrals': referrals,
+        'status_choices': Referral.Status.choices,
     })
 
 
@@ -192,6 +194,7 @@ def referral_detail(request, pk):
     )
     return render(request, 'occupational_health/referral_detail.html', {
         'referral': referral,
+        'status_choices': Referral.Status.choices,
     })
 
 
@@ -212,6 +215,21 @@ def referral_pdf(request, pk):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+@require_POST
+def referral_status_update(request, pk):
+    referral = get_object_or_404(
+        Referral,
+        pk=pk,
+        organization=request.user.organization,
+    )
+    form = ReferralStatusForm(request.POST)
+    if form.is_valid():
+        referral.status = form.cleaned_data['status']
+        referral.save(update_fields=['status', 'updated_at'])
+    return redirect('referral_detail', pk=referral.pk)
 
 
 @login_required
@@ -319,6 +337,12 @@ def _parse_exposure_post(post_data, available_factors):
         measurement = post_data.get(f'measurement_result_{factor_id}', '').strip()
         if not description:
             errors.append(f'Opis narazenia jest wymagany dla: {factor.name}.')
+            continue
+        if len(description) > 1000:
+            errors.append(f'Opis narazenia jest za dlugi dla: {factor.name}.')
+            continue
+        if len(measurement) > 500:
+            errors.append(f'Wynik pomiaru jest za dlugi dla: {factor.name}.')
             continue
 
         selected_exposures.append({

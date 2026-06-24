@@ -5,7 +5,7 @@ from django.utils import timezone
 
 
 class Organization(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=200)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
@@ -40,11 +40,11 @@ class Employee(models.Model):
     last_name = models.CharField(max_length=100)
     pesel = models.CharField(max_length=11, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    identity_document = models.CharField(max_length=50, blank=True)
+    identity_document = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
     city = models.CharField(max_length=100)
-    street = models.CharField(max_length=255)
+    street = models.CharField(max_length=150)
     building_number = models.CharField(max_length=20)
     apartment_number = models.CharField(max_length=20, blank=True)
     job_position = models.CharField(max_length=150)
@@ -56,6 +56,8 @@ class Employee(models.Model):
         errors = {}
         if self.pesel and (len(self.pesel) != 11 or not self.pesel.isdigit()):
             errors['pesel'] = 'PESEL musi skladac sie z dokladnie 11 cyfr.'
+        if self.birth_date and self.birth_date > timezone.localdate():
+            errors['birth_date'] = 'Data urodzenia nie moze byc w przyszlosci.'
         if not self.pesel and (not self.birth_date or not self.identity_document):
             message = 'Podaj PESEL albo date urodzenia oraz dokument tozsamosci.'
             if not self.birth_date:
@@ -78,7 +80,7 @@ class ExposureFactor(models.Model):
         OTHER = 'OTHER', 'Inne czynniki, w tym niebezpieczne i uciazliwe'
 
     category = models.CharField(max_length=20, choices=Category.choices)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=200)
     is_default = models.BooleanField(default=False)
     organization = models.ForeignKey(
         Organization,
@@ -127,7 +129,7 @@ class Referral(models.Model):
     )
     examination_type = models.CharField(max_length=20, choices=ExaminationType.choices)
     job_position = models.CharField(max_length=150)
-    work_description = models.TextField()
+    work_description = models.TextField(max_length=3000)
     deadline = models.DateField()
     status = models.CharField(
         max_length=20,
@@ -167,8 +169,8 @@ class ReferralExposure(models.Model):
         on_delete=models.PROTECT,
         related_name='referral_exposures',
     )
-    exposure_description = models.TextField()
-    measurement_result = models.CharField(max_length=255, blank=True)
+    exposure_description = models.TextField(max_length=1000)
+    measurement_result = models.CharField(max_length=500, blank=True)
 
     class Meta:
         constraints = [
@@ -188,9 +190,9 @@ class ReferralTemplate(models.Model):
         on_delete=models.CASCADE,
         related_name='referral_templates',
     )
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=150)
     job_position = models.CharField(max_length=150)
-    work_description = models.TextField()
+    work_description = models.TextField(max_length=3000)
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -217,8 +219,8 @@ class ReferralTemplateExposure(models.Model):
         on_delete=models.PROTECT,
         related_name='template_exposures',
     )
-    exposure_description = models.TextField()
-    measurement_result = models.CharField(max_length=255, blank=True)
+    exposure_description = models.TextField(max_length=1000)
+    measurement_result = models.CharField(max_length=500, blank=True)
 
     class Meta:
         constraints = [

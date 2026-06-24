@@ -19,6 +19,14 @@ from .models import (
 )
 
 
+POLISH_TEXT = 'Zażółć gęślą jaźń ĄĆĘŁŃÓŚŹŻ ąćęłńóśźż'
+MOJIBAKE_SEQUENCES = [
+    ''.join(chr(codepoint) for codepoint in [0x0102, 0x2026, 0x00E2, 0x20AC, 0x0161]),
+    ''.join(chr(codepoint) for codepoint in [0x0102, 0x201E, 0x00E2, 0x20AC, 0x00A6]),
+    ''.join(chr(codepoint) for codepoint in [0x0102, 0x0083, 0x00C2, 0x0142]),
+]
+
+
 def make_employee_xlsx(rows):
     workbook = Workbook()
     sheet = workbook.active
@@ -974,3 +982,366 @@ class ReferralPdfTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.content.startswith(b'%PDF'))
         self.assertGreater(len(response.content), 0)
+
+
+class ValidationStatusEncodingTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(
+            name=f'{POLISH_TEXT} Employer',
+            address='Świętokrzyska 1',
+            city='Łódź',
+            postal_code='90-001',
+            tax_id='1234567890',
+        )
+        self.other_organization = Organization.objects.create(
+            name='Other Employer',
+            address='Other 1',
+            city='Krakow',
+            postal_code='30-001',
+            tax_id='9999999999',
+        )
+        self.user = User.objects.create_user(
+            username='manager',
+            password='Manager123!',
+            organization=self.organization,
+            role=User.Role.MANAGER,
+        )
+        self.other_user = User.objects.create_user(
+            username='othermanager',
+            password='Manager123!',
+            organization=self.other_organization,
+            role=User.Role.MANAGER,
+        )
+        self.employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Łukasz',
+            last_name='Żółć',
+            pesel='12345678901',
+            city='Łódź',
+            street='Świętokrzyska',
+            building_number='1',
+            job_position='Operator',
+        )
+        self.other_employee = Employee.objects.create(
+            organization=self.other_organization,
+            first_name='Jan',
+            last_name='Kowalski',
+            pesel='10987654321',
+            city='Krakow',
+            street='Dluga',
+            building_number='2',
+            job_position='Technik',
+        )
+        self.factor = ExposureFactor.objects.create(
+            category=ExposureFactor.Category.PHYSICAL,
+            name='Hałas',
+            is_default=True,
+            organization=None,
+        )
+        self.other_factor = ExposureFactor.objects.create(
+            category=ExposureFactor.Category.CHEMICAL,
+            name='Cudzy czynnik',
+            organization=self.other_organization,
+            created_by=self.other_user,
+        )
+        self.referral = Referral.objects.create(
+            organization=self.organization,
+            employee=self.employee,
+            examination_type=Referral.ExaminationType.INITIAL,
+            job_position='Operator',
+            work_description='Opis pracy',
+            deadline=timezone.localdate() + timedelta(days=7),
+            created_by=self.user,
+        )
+        ReferralExposure.objects.create(
+            referral=self.referral,
+            exposure_factor=self.factor,
+            exposure_description='Opis narażenia',
+        )
+        self.other_referral = Referral.objects.create(
+            organization=self.other_organization,
+            employee=self.other_employee,
+            examination_type=Referral.ExaminationType.INITIAL,
+            job_position='Technik',
+            work_description='Cudzy opis',
+            deadline=timezone.localdate() + timedelta(days=7),
+            created_by=self.other_user,
+        )
+
+    def referral_payload(self, **overrides):
+        data = {
+            'employee': self.employee.pk,
+            'examination_type': Referral.ExaminationType.INITIAL,
+            'job_position': 'Operator',
+            'work_description': 'Opis pracy',
+            'deadline': timezone.localdate() + timedelta(days=7),
+            'exposure_factors': [str(self.factor.pk)],
+            f'exposure_description_{self.factor.pk}': 'Opis narażenia',
+            f'measurement_result_{self.factor.pk}': '',
+        }
+        data.update(overrides)
+        return data
+
+    def test_own_referral_can_be_set_to_each_allowed_status(self):
+        self.client.force_login(self.user)
+
+        for status, _ in Referral.Status.choices:
+            with self.subTest(status=status):
+                response = self.client.post(
+                    reverse('referral_status_update', args=[self.referral.pk]),
+                    {'status': status},
+                )
+                self.referral.refresh_from_db()
+                self.assertRedirects(response, reverse('referral_detail', args=[self.referral.pk]))
+                self.assertEqual(self.referral.status, status)
+
+    def test_invalid_status_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('referral_status_update', args=[self.referral.pk]),
+            {'status': 'HACKED'},
+        )
+
+        self.referral.refresh_from_db()
+        self.assertRedirects(response, reverse('referral_detail', args=[self.referral.pk]))
+        self.assertEqual(self.referral.status, Referral.Status.TO_ORDER)
+
+    def test_status_update_for_other_organization_returns_404(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('referral_status_update', args=[self.other_referral.pk]),
+            {'status': Referral.Status.COMPLETED},
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_does_not_change_status(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('referral_status_update', args=[self.referral.pk]))
+
+        self.referral.refresh_from_db()
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(self.referral.status, Referral.Status.TO_ORDER)
+
+    def test_too_long_job_position_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('referral_create'), self.referral_payload(
+            job_position='x' * 151,
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Upewnij się, że ta wartość ma co najwyżej 150 znaków')
+
+    def test_too_long_work_description_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('referral_create'), self.referral_payload(
+            work_description='x' * 3001,
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Upewnij się, że ta wartość ma co najwyżej 3000 znaków')
+
+    def test_too_long_exposure_description_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('referral_create'), self.referral_payload(
+            **{f'exposure_description_{self.factor.pk}': 'x' * 1001},
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Opis narazenia jest za dlugi')
+
+    def test_invalid_pesel_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('employee_create'), {
+            'first_name': 'Bad',
+            'last_name': 'Pesel',
+            'pesel': '123',
+            'city': 'Łódź',
+            'street': 'Prosta',
+            'building_number': '1',
+            'job_position': 'Operator',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'PESEL musi skladac sie z dokladnie 11 cyfr')
+
+    def test_missing_pesel_and_identity_document_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('employee_create'), {
+            'first_name': 'No',
+            'last_name': 'Document',
+            'city': 'Łódź',
+            'street': 'Prosta',
+            'building_number': '1',
+            'job_position': 'Operator',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Podaj PESEL albo date urodzenia oraz dokument tozsamosci')
+
+    def test_referral_without_factor_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('referral_create'), self.referral_payload(
+            exposure_factors=[],
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Wybierz minimum jeden czynnik narazenia')
+
+    def test_referral_factor_without_description_is_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('referral_create'), self.referral_payload(
+            **{f'exposure_description_{self.factor.pk}': ''},
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Opis narazenia jest wymagany')
+
+    def test_invalid_status_from_create_post_is_ignored(self):
+        self.client.force_login(self.user)
+
+        self.client.post(reverse('referral_create'), self.referral_payload(status=Referral.Status.COMPLETED))
+
+        created = Referral.objects.filter(
+            organization=self.organization,
+        ).exclude(pk=self.referral.pk).get()
+        self.assertEqual(created.status, Referral.Status.TO_ORDER)
+
+    def test_too_long_xlsx_data_is_reported_without_stopping_import(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'employees.xlsx',
+            make_employee_xlsx([
+                [
+                    'Jan',
+                    'Poprawny',
+                    '12345678901',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Łódź',
+                    'Prosta',
+                    '1',
+                    '',
+                    'Operator',
+                    'tak',
+                ],
+                [
+                    'A' * 101,
+                    'ZaDlugi',
+                    '12345678901',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Łódź',
+                    'Prosta',
+                    '1',
+                    '',
+                    'Operator',
+                    'tak',
+                ],
+            ]),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        response = self.client.post(reverse('employee_import'), {'file': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Employee.objects.filter(last_name='Poprawny').exists())
+        self.assertFalse(Employee.objects.filter(last_name='ZaDlugi').exists())
+        self.assertContains(response, 'Wiersz 3')
+
+    def test_polish_characters_save_and_read_from_model(self):
+        employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Zażółć',
+            last_name='Gęślą',
+            pesel='11111111111',
+            city=POLISH_TEXT,
+            street='Jaźń',
+            building_number='3',
+            job_position='Tester',
+        )
+
+        employee.refresh_from_db()
+        self.assertEqual(employee.city, POLISH_TEXT)
+
+    def test_polish_characters_render_in_html(self):
+        self.employee.city = POLISH_TEXT
+        self.employee.save()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('employee_list'))
+
+        content = response.content.decode('utf-8')
+        self.assertIn(POLISH_TEXT, content)
+        self.assert_no_mojibake(content)
+
+    def test_polish_characters_import_from_xlsx(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'employees.xlsx',
+            make_employee_xlsx([
+                [
+                    'Zażółć',
+                    'Gęślą',
+                    '12345678901',
+                    '',
+                    '',
+                    '',
+                    '',
+                    POLISH_TEXT,
+                    'Świętokrzyska',
+                    '1',
+                    '',
+                    'Łącznik',
+                    'tak',
+                ],
+            ]),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        response = self.client.post(reverse('employee_import'), {'file': upload})
+
+        self.assertEqual(response.status_code, 200)
+        employee = Employee.objects.get(last_name='Gęślą')
+        self.assertEqual(employee.city, POLISH_TEXT)
+
+    def test_pdf_with_polish_characters_generates(self):
+        self.organization.name = POLISH_TEXT
+        self.organization.save()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('referral_pdf', args=[self.referral.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content.startswith(b'%PDF'))
+        self.assertGreater(len(response.content), 0)
+
+    def test_responses_do_not_contain_known_mojibake_sequences(self):
+        self.client.force_login(self.user)
+
+        responses = [
+            self.client.get(reverse('employee_list')),
+            self.client.get(reverse('referral_detail', args=[self.referral.pk])),
+            self.client.get(reverse('referral_create')),
+        ]
+
+        for response in responses:
+            self.assert_no_mojibake(response.content.decode('utf-8'))
+
+    def assert_no_mojibake(self, text):
+        for sequence in MOJIBAKE_SEQUENCES:
+            self.assertNotIn(sequence, text)
