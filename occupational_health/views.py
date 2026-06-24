@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
@@ -45,6 +46,7 @@ def create_hr_user(request):
             user.organization = request.user.organization
             user.role = User.Role.HR
             user.save()
+            messages.success(request, 'Utworzono konto HR.')
             return redirect('home')
     else:
         form = HRUserCreationForm()
@@ -70,6 +72,7 @@ def employee_create(request):
             employee = form.save(commit=False)
             employee.organization = request.user.organization
             employee.save()
+            messages.success(request, 'Utworzono pracownika.')
             return redirect('employee_list')
     else:
         form = EmployeeForm()
@@ -94,6 +97,7 @@ def employee_edit(request, pk):
             employee = form.save(commit=False)
             employee.organization = request.user.organization
             employee.save()
+            messages.success(request, 'Zapisano zmiany pracownika.')
             return redirect('employee_list')
     else:
         form = EmployeeForm(instance=employee)
@@ -114,6 +118,7 @@ def employee_import(request):
                 form.cleaned_data['file'],
                 request.user.organization,
             )
+            messages.success(request, f'Import zakończony. Utworzono rekordy: {result.created_count}.')
     else:
         form = EmployeeImportForm()
 
@@ -150,6 +155,7 @@ def exposure_factor_create(request):
             factor.organization = request.user.organization
             factor.created_by = request.user
             factor.save()
+            messages.success(request, 'Dodano własny czynnik narażenia.')
             return redirect('exposure_factor_list')
     else:
         form = ExposureFactorForm(organization=request.user.organization)
@@ -169,6 +175,7 @@ def exposure_factor_delete(request, pk):
         organization=request.user.organization,
     )
     factor.delete()
+    messages.success(request, 'Usunięto własny czynnik narażenia.')
     return redirect('exposure_factor_list')
 
 
@@ -229,6 +236,7 @@ def referral_status_update(request, pk):
     if form.is_valid():
         referral.status = form.cleaned_data['status']
         referral.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Zmieniono status skierowania.')
     return redirect('referral_detail', pk=referral.pk)
 
 
@@ -266,6 +274,9 @@ def referral_create(request):
                         created_by=request.user,
                     )
                     _save_template_exposures(referral_template, selected_exposures)
+                    messages.success(request, 'Utworzono skierowanie i zapisano szablon stanowiska.')
+                else:
+                    messages.success(request, 'Utworzono skierowanie.')
 
             return redirect('referral_detail', pk=referral.pk)
         exposure_data = _exposure_data_from_post(request.POST)

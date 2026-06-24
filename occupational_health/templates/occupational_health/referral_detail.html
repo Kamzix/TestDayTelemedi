@@ -1,44 +1,37 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Szczegoly skierowania</title>
-    <style>
-        p, li { overflow-wrap: anywhere; }
-    </style>
-</head>
-<body>
-    <main>
-        <h1>Szczegoly skierowania</h1>
+{% extends "base.html" %}
+
+{% block title %}Szczegóły skierowania{% endblock %}
+
+{% block content %}
+    <h1>Szczegóły skierowania</h1>
+    <section class="panel">
         <p>Pracownik: {{ referral.employee.first_name }} {{ referral.employee.last_name }}</p>
         <p>Typ badania: {{ referral.get_examination_type_display }}</p>
         <p>Stanowisko: {{ referral.job_position }}</p>
         <p>Opis pracy: {{ referral.work_description }}</p>
         <p>Termin: {{ referral.deadline }}</p>
-        <p>Status: {{ referral.get_status_display }}</p>
-        <form method="post" action="{% url 'referral_status_update' referral.pk %}">
+        <p>Status: <span class="badge status">{{ referral.get_status_display }}</span></p>
+        <form class="inline-form" method="post" action="{% url 'referral_status_update' referral.pk %}">
             {% csrf_token %}
-            <label for="status">Zmien status</label>
-            <select id="status" name="status">
+            <label for="status-detail">Zmień status</label>
+            <select id="status-detail" name="status">
                 {% for value, label in status_choices %}
                     <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-            <button type="submit">Zapisz status</button>
+            <button class="secondary" type="submit">Zapisz status</button>
         </form>
-        <p><a href="{% url 'referral_pdf' referral.pk %}">Pobierz PDF</a></p>
+        <p><a class="button secondary" href="{% url 'referral_pdf' referral.pk %}">Pobierz PDF</a></p>
+    </section>
 
-        <h2>Czynniki narazenia</h2>
-        <ul>
-            {% for exposure in referral.exposures.all %}
-                <li>
-                    <strong>{{ exposure.exposure_factor.name }}</strong>
-                    <p>Opis: {{ exposure.exposure_description }}</p>
-                    <p>Wynik pomiaru: {{ exposure.measurement_result|default:"-" }}</p>
-                </li>
-            {% endfor %}
-        </ul>
-        <p><a href="{% url 'referral_list' %}">Powrot do listy</a></p>
-    </main>
-</body>
-</html>
+    <h2>Czynniki narażenia</h2>
+    <ul>
+        {% for exposure in referral.exposures.all %}
+            <li>
+                <strong>{{ exposure.exposure_factor.name }}</strong>
+                <p>Opis: {{ exposure.exposure_description }}</p>
+                <p>Wynik pomiaru: {{ exposure.measurement_result|default:"-" }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

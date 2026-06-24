@@ -1,34 +1,31 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Nowe skierowanie</title>
-    <style>
-        p, fieldset, textarea, input { overflow-wrap: anywhere; }
-        textarea { max-width: 100%; }
-    </style>
-</head>
-<body>
-    <main>
-        <h1>Nowe skierowanie</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <p>{{ form.template.label_tag }} {{ form.template }}</p>
-            <p>{{ form.employee.label_tag }} {{ form.employee }} {{ form.employee.errors }}</p>
-            <p>{{ form.examination_type.label_tag }} {{ form.examination_type }} {{ form.examination_type.errors }}</p>
-            <p>{{ form.job_position.label_tag }} {{ form.job_position }} {{ form.job_position.errors }}</p>
-            <p>{{ form.work_description.label_tag }} {{ form.work_description }} {{ form.work_description.errors }}</p>
-            <p>{{ form.deadline.label_tag }} {{ form.deadline }} {{ form.deadline.errors }}</p>
-            <p>{{ form.save_as_template.label_tag }} {{ form.save_as_template }}</p>
-            <p>{{ form.template_name.label_tag }} {{ form.template_name }} {{ form.template_name.errors }}</p>
+{% extends "base.html" %}
 
-            <h2>Czynniki narazenia</h2>
-            {% for category_label, rows in grouped_factor_rows %}
-                <section>
-                    <h3>{{ category_label }}</h3>
+{% block title %}Nowe skierowanie{% endblock %}
+
+{% block content %}
+    <h1>Nowe skierowanie</h1>
+    <p class="disclaimer">
+        Domyślna lista ma charakter demonstracyjny i pomocniczy. Pracodawca powinien wskazać rzeczywiste czynniki występujące na danym stanowisku oraz właściwe informacje o narażeniu i wynikach pomiarów.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <p>{{ form.template.label_tag }} {{ form.template }} {{ form.template.errors }}</p>
+        <p>{{ form.employee.label_tag }} {{ form.employee }} {{ form.employee.errors }}</p>
+        <p>{{ form.examination_type.label_tag }} {{ form.examination_type }} {{ form.examination_type.errors }}</p>
+        <p>{{ form.job_position.label_tag }} {{ form.job_position }} {{ form.job_position.errors }}</p>
+        <p>{{ form.work_description.label_tag }} {{ form.work_description }} {{ form.work_description.errors }}</p>
+        <p>{{ form.deadline.label_tag }} {{ form.deadline }} {{ form.deadline.errors }}</p>
+        <p>{{ form.save_as_template.label_tag }} {{ form.save_as_template }} {{ form.save_as_template.errors }}</p>
+        <p>{{ form.template_name.label_tag }} {{ form.template_name }} {{ form.template_name.errors }}</p>
+
+        <h2>Czynniki narażenia</h2>
+        {% for category_label, rows in grouped_factor_rows %}
+            <details {% if forloop.first %}open{% endif %}>
+                <summary>{{ category_label }} ({{ rows|length }})</summary>
+                <div class="factor-grid">
                     {% for row in rows %}
-                        <fieldset>
+                        <fieldset class="factor-row">
                             <legend>
                                 <label>
                                     <input
@@ -38,11 +35,11 @@
                                         {% if row.selected %}checked{% endif %}
                                     >
                                     {{ row.factor.name }}
-                                    {% if row.factor.is_default %}(domyslny){% else %}(wlasny){% endif %}
+                                    {% if row.factor.is_default %}(domyślny){% else %}(własny){% endif %}
                                 </label>
                             </legend>
                             <p>
-                                <label for="exposure_description_{{ row.factor.pk }}">Opis narazenia</label>
+                                <label for="exposure_description_{{ row.factor.pk }}">Opis narażenia</label>
                                 <textarea id="exposure_description_{{ row.factor.pk }}" name="exposure_description_{{ row.factor.pk }}" maxlength="1000" rows="3">{{ row.description }}</textarea>
                             </p>
                             <p>
@@ -51,14 +48,12 @@
                             </p>
                         </fieldset>
                     {% empty %}
-                        <p>Brak czynnikow w tej kategorii.</p>
+                        <p>Brak czynników w tej kategorii.</p>
                     {% endfor %}
-                </section>
-            {% endfor %}
+                </div>
+            </details>
+        {% endfor %}
 
-            <button type="submit">Zapisz skierowanie</button>
-        </form>
-        <p><a href="{% url 'home' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+        <button type="submit">Zapisz skierowanie</button>
+    </form>
+{% endblock %}

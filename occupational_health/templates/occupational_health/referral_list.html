@@ -1,17 +1,11 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Skierowania</title>
-    <style>
-        table { table-layout: fixed; width: 100%; }
-        td, th, p { overflow-wrap: anywhere; }
-    </style>
-</head>
-<body>
-    <main>
-        <h1>Skierowania</h1>
-        <p><a href="{% url 'referral_create' %}">Nowe skierowanie</a></p>
+{% extends "base.html" %}
+
+{% block title %}Skierowania{% endblock %}
+
+{% block content %}
+    <h1>Skierowania</h1>
+    <p><a class="button" href="{% url 'referral_create' %}">Nowe skierowanie</a></p>
+    <div class="table-wrap">
         <table>
             <thead>
                 <tr>
@@ -33,35 +27,34 @@
                         <td>{{ referral.job_position }}</td>
                         <td>
                             {{ referral.deadline }}
-                            {% if referral.is_overdue %}<strong>PRZETERMINOWANE</strong>{% endif %}
+                            {% if referral.is_overdue %}<span class="badge overdue">PRZETERMINOWANE</span>{% endif %}
                         </td>
                         <td>{{ referral.created_at }}</td>
                         <td>
-                            {{ referral.get_status_display }}
-                            <form method="post" action="{% url 'referral_status_update' referral.pk %}">
+                            <span class="badge status">{{ referral.get_status_display }}</span>
+                            <form class="inline-form" method="post" action="{% url 'referral_status_update' referral.pk %}">
                                 {% csrf_token %}
-                                <select name="status">
+                                <label class="sr-only" for="status-list-{{ referral.pk }}">Status</label>
+                                <select id="status-list-{{ referral.pk }}" name="status">
                                     {% for value, label in status_choices %}
                                         <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="submit">Zmien</button>
+                                <button class="secondary" type="submit">Zmień</button>
                             </form>
                         </td>
                         <td>{{ referral.created_by.username }}</td>
                         <td>
-                            <a href="{% url 'referral_detail' referral.pk %}">Szczegoly</a>
+                            <a href="{% url 'referral_detail' referral.pk %}">Szczegóły</a>
                             <a href="{% url 'referral_pdf' referral.pk %}">PDF</a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8">Brak skierowan.</td>
+                        <td colspan="8">Brak skierowań.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <p><a href="{% url 'home' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+    </div>
+{% endblock %}

@@ -1,18 +1,13 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Dodaj czynnik narazenia</title>
-</head>
-<body>
-    <main>
-        <h1>Dodaj czynnik narazenia</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Zapisz</button>
-        </form>
-        <p><a href="{% url 'exposure_factor_list' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Dodaj czynnik narażenia{% endblock %}
+
+{% block content %}
+    <h1>Dodaj czynnik narażenia</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Zapisz</button>
+        <a class="button secondary" href="{% url 'exposure_factor_list' %}">Powrót</a>
+    </form>
+{% endblock %}

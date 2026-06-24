@@ -1,18 +1,18 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Pracownicy</title>
-</head>
-<body>
-    <main>
-        <h1>Pracownicy</h1>
-        <p><a href="{% url 'employee_create' %}">Dodaj pracownika</a></p>
-        <p><a href="{% url 'employee_import' %}">Import XLSX</a></p>
+{% extends "base.html" %}
+
+{% block title %}Pracownicy{% endblock %}
+
+{% block content %}
+    <h1>Pracownicy</h1>
+    <p>
+        <a class="button" href="{% url 'employee_create' %}">Dodaj pracownika</a>
+        <a class="button secondary" href="{% url 'employee_import' %}">Import XLSX</a>
+    </p>
+    <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Imie i nazwisko</th>
+                    <th>Imię i nazwisko</th>
                     <th>Stanowisko</th>
                     <th>Miasto</th>
                     <th>Status</th>
@@ -30,12 +30,10 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">Brak pracownikow.</td>
+                        <td colspan="5">Brak pracowników.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <p><a href="{% url 'home' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+    </div>
+{% endblock %}

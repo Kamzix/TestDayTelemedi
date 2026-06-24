@@ -2,6 +2,7 @@ from io import BytesIO
 from datetime import timedelta
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -92,7 +93,7 @@ class AccessAndOrganizationTests(TestCase):
         response = self.client.get(reverse('create_hr_user'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Utworz konto HR')
+        self.assertContains(response, 'Utwórz konto HR')
 
     def test_hr_gets_403_on_hr_creation_form(self):
         self.client.force_login(self.hr)
@@ -1345,3 +1346,150 @@ class ValidationStatusEncodingTests(TestCase):
     def assert_no_mojibake(self, text):
         for sequence in MOJIBAKE_SEQUENCES:
             self.assertNotIn(sequence, text)
+
+
+class ExposureCatalogAndUiTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(
+            name='Telemedi Demo Employer',
+            address='Rzymowskiego 53',
+            city='Warszawa',
+            postal_code='02-697',
+            tax_id='0000000000',
+        )
+        self.user = User.objects.create_user(
+            username='manager',
+            password='Manager123!',
+            organization=self.organization,
+            role=User.Role.MANAGER,
+        )
+        self.employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Anna',
+            last_name='Nowak',
+            pesel='12345678901',
+            city='Warszawa',
+            street='Prosta',
+            building_number='1',
+            job_position='Operator',
+        )
+
+    def seed_catalog(self):
+        call_command('seed_demo', verbosity=0)
+        self.user.refresh_from_db()
+        self.organization.refresh_from_db()
+
+    def test_each_category_has_at_least_20_default_factors(self):
+        self.seed_catalog()
+
+        for category, _ in ExposureFactor.Category.choices:
+            with self.subTest(category=category):
+                self.assertGreaterEqual(
+                    ExposureFactor.objects.filter(
+                        is_default=True,
+                        organization=None,
+                        category=category,
+                    ).count(),
+                    20,
+                )
+
+    def test_default_catalog_has_at_least_100_factors(self):
+        self.seed_catalog()
+
+        self.assertGreaterEqual(
+            ExposureFactor.objects.filter(is_default=True, organization=None).count(),
+            100,
+        )
+
+    def test_repeated_seed_does_not_create_duplicates(self):
+        self.seed_catalog()
+        first_count = ExposureFactor.objects.filter(is_default=True, organization=None).count()
+
+        self.seed_catalog()
+
+        self.assertEqual(
+            ExposureFactor.objects.filter(is_default=True, organization=None).count(),
+            first_count,
+        )
+
+    def test_seed_keeps_organization_custom_factors(self):
+        custom_factor = ExposureFactor.objects.create(
+            category=ExposureFactor.Category.OTHER,
+            name='Własny czynnik organizacji',
+            organization=self.organization,
+            created_by=self.user,
+        )
+
+        self.seed_catalog()
+
+        self.assertTrue(ExposureFactor.objects.filter(pk=custom_factor.pk).exists())
+
+    def test_disclaimer_is_visible(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('exposure_factor_list'))
+
+        self.assertContains(response, 'Domyślna lista ma charakter demonstracyjny')
+
+    def test_referral_form_contains_five_categories(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('referral_create'))
+
+        for _, label in ExposureFactor.Category.choices:
+            self.assertContains(response, label)
+
+    def test_referral_form_factor_count_matches_seed(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('referral_create'))
+        content = response.content.decode('utf-8')
+
+        self.assertEqual(content.count('name="exposure_factors"'), 100)
+
+    def test_pages_use_base_template_shell(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        for url_name in ['home', 'employee_list', 'exposure_factor_list', 'referral_create']:
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name))
+                self.assertContains(response, 'class="app-header"')
+                self.assertContains(response, 'Telemedi Occupational Health MVP')
+
+    def test_django_messages_are_displayed(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('exposure_factor_create'), {
+            'category': ExposureFactor.Category.OTHER,
+            'name': 'Komunikat testowy',
+        }, follow=True)
+
+        self.assertContains(response, 'Dodano własny czynnik narażenia.')
+
+    def test_polish_catalog_names_render_correctly(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('exposure_factor_list'))
+
+        self.assertContains(response, 'Hałas infradźwiękowy')
+        self.assertContains(response, 'Środki dezynfekcyjne')
+        self.assertContains(response, 'Praca na wysokości')
+
+    def test_catalog_html_has_no_known_mojibake(self):
+        self.seed_catalog()
+        self.client.force_login(self.user)
+
+        responses = [
+            self.client.get(reverse('exposure_factor_list')),
+            self.client.get(reverse('referral_create')),
+        ]
+
+        for response in responses:
+            text = response.content.decode('utf-8')
+            for sequence in MOJIBAKE_SEQUENCES:
+                self.assertNotIn(sequence, text)

@@ -1,41 +1,37 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Czynniki narazenia</title>
-</head>
-<body>
-    <main>
-        <h1>Czynniki narazenia</h1>
-        <p><a href="{% url 'exposure_factor_create' %}">Dodaj czynnik</a></p>
+{% extends "base.html" %}
 
-        {% for category_label, factors in grouped_factors %}
-            <section>
-                <h2>{{ category_label }}</h2>
-                {% if factors %}
-                    <ul>
-                        {% for factor in factors %}
-                            <li>
-                                {{ factor.name }}
-                                {% if factor.is_default %}
-                                    <strong>domyslny</strong>
-                                {% else %}
-                                    <strong>wlasny</strong>
-                                    <form method="post" action="{% url 'exposure_factor_delete' factor.pk %}">
-                                        {% csrf_token %}
-                                        <button type="submit">Usun</button>
-                                    </form>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Brak czynnikow w tej kategorii.</p>
-                {% endif %}
-            </section>
-        {% endfor %}
+{% block title %}Czynniki narażenia{% endblock %}
 
-        <p><a href="{% url 'home' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+{% block content %}
+    <h1>Czynniki narażenia</h1>
+    <p class="disclaimer">
+        Domyślna lista ma charakter demonstracyjny i pomocniczy. Pracodawca powinien wskazać rzeczywiste czynniki występujące na danym stanowisku oraz właściwe informacje o narażeniu i wynikach pomiarów.
+    </p>
+    <p><a class="button" href="{% url 'exposure_factor_create' %}">Dodaj czynnik</a></p>
+
+    {% for category_label, factors in grouped_factors %}
+        <details {% if forloop.first %}open{% endif %}>
+            <summary>{{ category_label }} ({{ factors|length }})</summary>
+            {% if factors %}
+                <ul>
+                    {% for factor in factors %}
+                        <li>
+                            {{ factor.name }}
+                            {% if factor.is_default %}
+                                <span class="badge status">domyślny</span>
+                            {% else %}
+                                <span class="badge status">własny</span>
+                                <form class="inline-form" method="post" action="{% url 'exposure_factor_delete' factor.pk %}">
+                                    {% csrf_token %}
+                                    <button class="danger" type="submit">Usuń</button>
+                                </form>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Brak czynników w tej kategorii.</p>
+            {% endif %}
+        </details>
+    {% endfor %}
+{% endblock %}

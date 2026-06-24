@@ -1,19 +1,17 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Import pracownikow</title>
-</head>
-<body>
-    <main>
-        <h1>Import pracownikow</h1>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Importuj</button>
-        </form>
+{% extends "base.html" %}
 
-        {% if result %}
+{% block title %}Import pracowników{% endblock %}
+
+{% block content %}
+    <h1>Import pracowników</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Importuj</button>
+    </form>
+
+    {% if result %}
+        <section class="panel">
             <h2>Wynik importu</h2>
             <p>Utworzone rekordy: {{ result.created_count }}</p>
             {% if result.errors %}
@@ -23,11 +21,8 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>Brak bledow.</p>
+                <p>Brak błędów.</p>
             {% endif %}
-        {% endif %}
-
-        <p><a href="{% url 'employee_list' %}">Powrot do listy</a></p>
-    </main>
-</body>
-</html>
+        </section>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,260 @@
+:root {
+    --bg: #f6f8fb;
+    --surface: #ffffff;
+    --text: #18212f;
+    --muted: #5c6a7c;
+    --border: #d9e1ec;
+    --primary: #155eef;
+    --primary-dark: #1249b6;
+    --danger: #b42318;
+    --success-bg: #e7f8ef;
+    --success-text: #166534;
+    --warning-bg: #fff7d6;
+    --warning-text: #92400e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
+
+a {
+    color: var(--primary);
+}
+
+.app-header {
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1rem max(1rem, calc((100vw - 1180px) / 2));
+}
+
+.brand {
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.user-meta {
+    color: var(--muted);
+    margin: 0.2rem 0 0;
+}
+
+.app-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem max(1rem, calc((100vw - 1180px) / 2));
+}
+
+.app-nav a {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.4rem 0.7rem;
+    text-decoration: none;
+}
+
+.container {
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 1.25rem;
+}
+
+.panel,
+section,
+form,
+.table-wrap {
+    overflow-wrap: anywhere;
+}
+
+.panel,
+form,
+table {
+    background: var(--surface);
+}
+
+.panel,
+form {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+form.inline-form {
+    background: transparent;
+    border: 0;
+    display: inline-flex;
+    gap: 0.4rem;
+    padding: 0;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    min-width: 760px;
+    width: 100%;
+}
+
+td,
+th {
+    border-bottom: 1px solid var(--border);
+    padding: 0.65rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: #eef3f8;
+}
+
+label {
+    display: inline-block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+input,
+select,
+textarea {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font: inherit;
+    max-width: 100%;
+    padding: 0.45rem 0.55rem;
+}
+
+textarea {
+    width: 100%;
+}
+
+.button,
+button {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-block;
+    font: inherit;
+    padding: 0.45rem 0.75rem;
+    text-decoration: none;
+}
+
+.button:hover,
+button:hover {
+    background: var(--primary-dark);
+}
+
+.button.secondary,
+button.secondary {
+    background: #ffffff;
+    color: var(--text);
+}
+
+.button.danger,
+button.danger {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.badge {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+}
+
+.badge.status {
+    background: #e8f0ff;
+    color: var(--primary-dark);
+}
+
+.badge.overdue {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.message {
+    border-radius: 6px;
+    margin: 0 0 0.75rem;
+    padding: 0.65rem 0.85rem;
+}
+
+.message.success {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.errorlist {
+    color: var(--danger);
+    margin-top: 0.25rem;
+}
+
+.disclaimer {
+    background: var(--warning-bg);
+    border: 1px solid #f6d365;
+    border-radius: 8px;
+    color: var(--warning-text);
+    padding: 0.8rem;
+}
+
+details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+}
+
+summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.factor-grid {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.factor-row {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.sr-only {
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+}
+
+@media (max-width: 720px) {
+    .app-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+}

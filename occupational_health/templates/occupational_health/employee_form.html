@@ -1,18 +1,13 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>{{ title }}</title>
-</head>
-<body>
-    <main>
-        <h1>{{ title }}</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Zapisz</button>
-        </form>
-        <p><a href="{% url 'employee_list' %}">Powrot do listy</a></p>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Zapisz</button>
+        <a class="button secondary" href="{% url 'employee_list' %}">Powrót do listy</a>
+    </form>
+{% endblock %}

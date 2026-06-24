@@ -1,18 +1,12 @@
-<!doctype html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <title>Utworz konto HR</title>
-</head>
-<body>
-    <main>
-        <h1>Utworz konto HR</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Utworz</button>
-        </form>
-        <p><a href="{% url 'home' %}">Powrot</a></p>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Utwórz konto HR{% endblock %}
+
+{% block content %}
+    <h1>Utwórz konto HR</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Utwórz</button>
+    </form>
+{% endblock %}
