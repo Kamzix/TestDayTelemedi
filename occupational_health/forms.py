@@ -4,6 +4,8 @@ from django.utils import timezone
 
 from .models import Employee, ExposureFactor, Referral, ReferralTemplate, User
 
+MAX_IMPORT_FILE_SIZE = 2 * 1024 * 1024
+
 
 class HRUserCreationForm(UserCreationForm):
     class Meta:
@@ -44,6 +46,14 @@ class EmployeeForm(forms.ModelForm):
 
 class EmployeeImportForm(forms.Form):
     file = forms.FileField(label='Plik XLSX')
+
+    def clean_file(self):
+        file = self.cleaned_data['file']
+        if file.size > MAX_IMPORT_FILE_SIZE:
+            raise forms.ValidationError('Plik XLSX moze miec maksymalnie 2 MB.')
+        if not file.name.lower().endswith('.xlsx'):
+            raise forms.ValidationError('Wybierz plik w formacie .xlsx.')
+        return file
 
 
 class ExposureFactorForm(forms.ModelForm):

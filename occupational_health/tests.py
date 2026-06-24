@@ -559,6 +559,48 @@ class EmployeeTests(TestCase):
         self.assertFalse(Employee.objects.filter(last_name='Wiersz').exists())
         self.assertContains(response, 'Wiersz 3')
 
+    def test_non_xlsx_upload_is_rejected_before_import(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'employees.txt',
+            b'not an xlsx file',
+            content_type='text/plain',
+        )
+
+        response = self.client.post(reverse('employee_import'), {'file': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Wybierz plik w formacie .xlsx')
+        self.assertFalse(Employee.objects.filter(last_name='employees.txt').exists())
+
+    def test_too_large_xlsx_upload_is_rejected_before_import(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'employees.xlsx',
+            b'0' * (2 * 1024 * 1024 + 1),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        response = self.client.post(reverse('employee_import'), {'file': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Plik XLSX moze miec maksymalnie 2 MB')
+        self.assertEqual(Employee.objects.count(), 0)
+
+    def test_corrupted_xlsx_is_reported_without_creating_employees(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'employees.xlsx',
+            b'corrupted workbook bytes',
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        response = self.client.post(reverse('employee_import'), {'file': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nie mozna odczytac pliku XLSX')
+        self.assertEqual(Employee.objects.count(), 0)
+
 
 class ExposureFactorTests(TestCase):
     def setUp(self):
@@ -627,6 +669,20 @@ class ExposureFactorTests(TestCase):
         response = self.client.get(reverse('exposure_factor_list'))
 
         self.assertNotContains(response, self.other_factor.name)
+
+    def test_user_does_not_see_other_organization_factor_marked_default(self):
+        ExposureFactor.objects.create(
+            category=ExposureFactor.Category.OTHER,
+            name='Bledny cudzy domyslny',
+            is_default=True,
+            organization=self.other_organization,
+            created_by=self.other_user,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('exposure_factor_list'))
+
+        self.assertNotContains(response, 'Bledny cudzy domyslny')
 
     def test_create_ignores_posted_organization_is_default_and_created_by(self):
         self.client.force_login(self.user)
@@ -832,6 +888,20 @@ class ReferralTests(TestCase):
         self.assertContains(response, self.default_factor.name)
         self.assertContains(response, self.own_factor.name)
         self.assertNotContains(response, self.other_factor.name)
+
+    def test_form_does_not_show_other_organization_factor_marked_default(self):
+        ExposureFactor.objects.create(
+            category=ExposureFactor.Category.OTHER,
+            name='Bledny czynnik globalny',
+            is_default=True,
+            organization=self.other_organization,
+            created_by=self.other_user,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('referral_create'))
+
+        self.assertNotContains(response, 'Bledny czynnik globalny')
 
     def test_post_with_other_organization_employee_is_rejected(self):
         self.client.force_login(self.user)

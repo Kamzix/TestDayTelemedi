@@ -155,7 +155,7 @@ def employee_import(request):
 @role_required(User.Role.HR)
 def exposure_factor_list(request):
     factors = ExposureFactor.objects.filter(
-        Q(is_default=True) | Q(organization=request.user.organization),
+        Q(is_default=True, organization__isnull=True) | Q(organization=request.user.organization),
     )
     grouped_factors = []
     for category_value, category_label in ExposureFactor.Category.choices:
@@ -334,7 +334,7 @@ def referral_template_list(request):
 
 def _available_exposure_factors(organization):
     return ExposureFactor.objects.filter(
-        Q(is_default=True) | Q(organization=organization),
+        Q(is_default=True, organization__isnull=True) | Q(organization=organization),
     ).order_by('category', 'name')
 
 

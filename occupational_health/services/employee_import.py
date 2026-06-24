@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from zipfile import BadZipFile
 
 from django.core.exceptions import ValidationError
+from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl import load_workbook
 
 from occupational_health.models import Employee
@@ -38,7 +40,14 @@ class ImportResult:
 
 def import_employees_from_xlsx(file_obj, organization):
     result = ImportResult()
-    workbook = load_workbook(file_obj, data_only=True)
+    try:
+        workbook = load_workbook(file_obj, data_only=True)
+    except (BadZipFile, InvalidFileException, OSError, ValueError):
+        result.errors.append(ImportErrorItem(
+            row=0,
+            error='Nie mozna odczytac pliku XLSX. Sprawdz format pliku.',
+        ))
+        return result
     sheet = workbook.active
 
     headers = [_normalize_header(cell.value) for cell in sheet[1]]
