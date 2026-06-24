@@ -30,6 +30,16 @@ py -m venv .venv
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
+## Szybkie komendy Windows
+
+```powershell
+.\dev.cmd
+.\test.cmd
+.\check.cmd
+```
+
+Sa to lokalne odpowiedniki workflow `npm run dev/test`, bez dokladania Node.js do monolitu Django.
+
 ## Konto demo
 
 - username: `manager`
