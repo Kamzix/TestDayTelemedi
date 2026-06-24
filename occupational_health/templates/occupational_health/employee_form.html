@@ -4,10 +4,81 @@
 
 {% block content %}
     <h1>{{ title }}</h1>
-    <form method="post">
+    <form class="employee-card" method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zapisz</button>
-        <a class="button secondary" href="{% url 'employee_list' %}">Powrót do listy</a>
+        {{ form.non_field_errors }}
+
+        <div class="employee-form-grid">
+            <div class="form-field">
+                <label for="{{ form.first_name.id_for_label }}">Imię</label>
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.last_name.id_for_label }}">Nazwisko</label>
+                {{ form.last_name }}
+                {{ form.last_name.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.pesel.id_for_label }}">PESEL</label>
+                {{ form.pesel }}
+                {{ form.pesel.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.birth_date.id_for_label }}">Data urodzenia</label>
+                {{ form.birth_date }}
+                {{ form.birth_date.errors }}
+            </div>
+            <div class="form-field form-field-wide">
+                <label for="{{ form.identity_document.id_for_label }}">Dokument tożsamości</label>
+                {{ form.identity_document }}
+                {{ form.identity_document.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.email.id_for_label }}">E-mail</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.phone.id_for_label }}">Telefon</label>
+                {{ form.phone }}
+                {{ form.phone.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.city.id_for_label }}">Miasto</label>
+                {{ form.city }}
+                {{ form.city.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.street.id_for_label }}">Ulica</label>
+                {{ form.street }}
+                {{ form.street.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.building_number.id_for_label }}">Numer budynku</label>
+                {{ form.building_number }}
+                {{ form.building_number.errors }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.apartment_number.id_for_label }}">Numer lokalu</label>
+                {{ form.apartment_number }}
+                {{ form.apartment_number.errors }}
+            </div>
+            <div class="form-field form-field-wide">
+                <label for="{{ form.job_position.id_for_label }}">Stanowisko</label>
+                {{ form.job_position }}
+                {{ form.job_position.errors }}
+            </div>
+            <div class="form-field form-field-wide checkbox-field">
+                {{ form.active }}
+                <label for="{{ form.active.id_for_label }}">Aktywny</label>
+                {{ form.active.errors }}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Zapisz</button>
+            <a class="button secondary" href="{% url 'employee_list' %}">Powrót do listy</a>
+        </div>
     </form>
 {% endblock %}

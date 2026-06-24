@@ -208,6 +208,98 @@ button.danger {
     margin-top: 0.25rem;
 }
 
+.auth-card .errorlist,
+.employee-card .errorlist {
+    list-style-position: inside;
+    margin: 0.25rem 0 0;
+    padding: 0;
+}
+
+.auth-shell {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 190px);
+}
+
+.auth-card {
+    display: grid;
+    gap: 1rem;
+    max-width: 460px;
+    padding: 1.5rem;
+    width: 100%;
+}
+
+.auth-card h1 {
+    margin: 0 0 0.25rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.auth-card input,
+.employee-card input:not([type="checkbox"]),
+.employee-card select,
+.employee-card textarea {
+    width: 100%;
+}
+
+.form-submit {
+    justify-content: center;
+    min-height: 2.6rem;
+    width: 100%;
+}
+
+.employee-card {
+    max-width: 920px;
+}
+
+.employee-form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-field-wide,
+.checkbox-field,
+.form-actions {
+    grid-column: 1 / -1;
+}
+
+.checkbox-field {
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    flex-direction: row;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+}
+
+.checkbox-field label {
+    margin: 0;
+}
+
+.checkbox-field input {
+    height: 1.1rem;
+    width: 1.1rem;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.form-actions .button,
+.form-actions button {
+    min-width: 8rem;
+    text-align: center;
+}
+
 .disclaimer {
     background: var(--warning-bg);
     border: 1px solid #f6d365;
@@ -256,5 +348,13 @@ summary {
 
     .container {
         padding: 1rem;
+    }
+
+    .employee-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-shell {
+        min-height: auto;
     }
 }
