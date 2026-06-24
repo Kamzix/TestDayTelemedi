@@ -8,5 +8,12 @@
         <p>Użytkownik: {{ request.user.get_full_name|default:request.user.username }}</p>
         <p>Rola: {{ request.user.role }}</p>
         <p>Organizacja: {{ request.user.organization.name }}</p>
+        {% if request.user.role == "MANAGER" %}
+            <p>Zakres: zarzadzanie kontami HR w organizacji.</p>
+            <p><a class="button" href="{% url 'hr_user_list' %}">Konta HR</a></p>
+        {% elif request.user.role == "HR" %}
+            <p>Zakres: procesy operacyjne medycyny pracy.</p>
+            <p><a class="button" href="{% url 'employee_list' %}">Pracownicy</a></p>
+        {% endif %}
     </section>
 {% endblock %}

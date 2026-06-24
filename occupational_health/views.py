@@ -1,5 +1,7 @@
-from django.contrib.auth.decorators import login_required
+from functools import wraps
+
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
@@ -29,16 +31,38 @@ from .services.employee_import import import_employees_from_xlsx
 from .services.referral_pdf import generate_referral_pdf
 
 
+def role_required(*allowed_roles):
+    def decorator(view_func):
+        @login_required
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if request.user.role not in allowed_roles:
+                raise PermissionDenied
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 @login_required
 def home(request):
     return render(request, 'occupational_health/dashboard.html')
 
 
-@login_required
-def create_hr_user(request):
-    if request.user.role != User.Role.MANAGER:
-        raise PermissionDenied
+@role_required(User.Role.MANAGER)
+def hr_user_list(request):
+    users = User.objects.filter(
+        organization=request.user.organization,
+        role=User.Role.HR,
+    ).order_by('last_name', 'first_name', 'username')
+    return render(request, 'occupational_health/hr_user_list.html', {
+        'users': users,
+    })
 
+
+@role_required(User.Role.MANAGER)
+def create_hr_user(request):
     if request.method == 'POST':
         form = HRUserCreationForm(request.POST)
         if form.is_valid():
@@ -47,14 +71,14 @@ def create_hr_user(request):
             user.role = User.Role.HR
             user.save()
             messages.success(request, 'Utworzono konto HR.')
-            return redirect('home')
+            return redirect('hr_user_list')
     else:
         form = HRUserCreationForm()
 
     return render(request, 'occupational_health/create_hr_user.html', {'form': form})
 
 
-@login_required
+@role_required(User.Role.HR)
 def employee_list(request):
     employees = Employee.objects.filter(
         organization=request.user.organization,
@@ -64,7 +88,7 @@ def employee_list(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def employee_create(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST)
@@ -83,7 +107,7 @@ def employee_create(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def employee_edit(request, pk):
     employee = get_object_or_404(
         Employee,
@@ -108,7 +132,7 @@ def employee_edit(request, pk):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def employee_import(request):
     result = None
     if request.method == 'POST':
@@ -128,7 +152,7 @@ def employee_import(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def exposure_factor_list(request):
     factors = ExposureFactor.objects.filter(
         Q(is_default=True) | Q(organization=request.user.organization),
@@ -145,7 +169,7 @@ def exposure_factor_list(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def exposure_factor_create(request):
     if request.method == 'POST':
         form = ExposureFactorForm(request.POST, organization=request.user.organization)
@@ -165,7 +189,7 @@ def exposure_factor_create(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 @require_POST
 def exposure_factor_delete(request, pk):
     factor = get_object_or_404(
@@ -179,7 +203,7 @@ def exposure_factor_delete(request, pk):
     return redirect('exposure_factor_list')
 
 
-@login_required
+@role_required(User.Role.HR)
 def referral_list(request):
     referrals = Referral.objects.filter(
         organization=request.user.organization,
@@ -190,7 +214,7 @@ def referral_list(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def referral_detail(request, pk):
     referral = get_object_or_404(
         Referral.objects.select_related('employee', 'created_by').prefetch_related(
@@ -205,7 +229,7 @@ def referral_detail(request, pk):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def referral_pdf(request, pk):
     referral = get_object_or_404(
         Referral.objects.select_related(
@@ -224,7 +248,7 @@ def referral_pdf(request, pk):
     return response
 
 
-@login_required
+@role_required(User.Role.HR)
 @require_POST
 def referral_status_update(request, pk):
     referral = get_object_or_404(
@@ -240,7 +264,7 @@ def referral_status_update(request, pk):
     return redirect('referral_detail', pk=referral.pk)
 
 
-@login_required
+@role_required(User.Role.HR)
 def referral_create(request):
     organization = request.user.organization
     template = _get_template_from_query(request, organization)
@@ -298,7 +322,7 @@ def referral_create(request):
     })
 
 
-@login_required
+@role_required(User.Role.HR)
 def referral_template_list(request):
     templates = ReferralTemplate.objects.filter(
         organization=request.user.organization,

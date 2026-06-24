@@ -28,12 +28,17 @@
     {% if request.user.is_authenticated %}
         <nav class="app-nav" aria-label="Nawigacja główna">
             <a href="{% url 'home' %}">Dashboard</a>
-            <a href="{% url 'employee_list' %}">Pracownicy</a>
-            <a href="{% url 'employee_create' %}">Dodaj pracownika</a>
-            <a href="{% url 'exposure_factor_list' %}">Czynniki</a>
-            <a href="{% url 'referral_create' %}">Nowe skierowanie</a>
-            <a href="{% url 'referral_list' %}">Skierowania</a>
-            <a href="{% url 'referral_template_list' %}">Szablony</a>
+            {% if request.user.role == "MANAGER" %}
+                <a href="{% url 'hr_user_list' %}">Konta HR</a>
+                <a href="{% url 'create_hr_user' %}">Dodaj HR</a>
+            {% elif request.user.role == "HR" %}
+                <a href="{% url 'employee_list' %}">Pracownicy</a>
+                <a href="{% url 'employee_create' %}">Dodaj pracownika</a>
+                <a href="{% url 'exposure_factor_list' %}">Czynniki</a>
+                <a href="{% url 'referral_create' %}">Nowe skierowanie</a>
+                <a href="{% url 'referral_list' %}">Skierowania</a>
+                <a href="{% url 'referral_template_list' %}">Szablony</a>
+            {% endif %}
         </nav>
     {% endif %}
 

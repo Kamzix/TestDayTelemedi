@@ -40,12 +40,14 @@ py -m venv .venv
 
 Sa to lokalne odpowiedniki workflow `npm run dev/test`, bez dokladania Node.js do monolitu Django.
 
-## Konto demo
+## Konta demo
 
-- username: `manager`
-- password: `Manager123!`
+- MANAGER: `manager` / `Manager123!`
+- HR: `hr_demo` / `HrDemo123!`
 
 Dane logowania są przeznaczone wyłącznie do lokalnego demo.
+
+MANAGER zarzadza kontami HR w swojej organizacji. HR obsluguje proces operacyjny: pracownikow, import XLSX, czynniki, skierowania, szablony, statusy i PDF.
 
 ## Testy
 

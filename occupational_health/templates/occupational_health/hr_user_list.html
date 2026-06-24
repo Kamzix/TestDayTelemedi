@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Konta HR{% endblock %}
+
+{% block content %}
+    <h1>Konta HR</h1>
+    <p><a class="button" href="{% url 'create_hr_user' %}">Dodaj konto HR</a></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Login</th>
+                <th>Imie i nazwisko</th>
+                <th>E-mail</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.get_full_name|default:"-" }}</td>
+                    <td>{{ user.email|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">Brak kont HR w tej organizacji.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

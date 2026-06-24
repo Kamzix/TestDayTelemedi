@@ -81,6 +81,42 @@ class AccessAndOrganizationTests(TestCase):
             organization=self.organization,
             role=User.Role.HR,
         )
+        self.other_hr = User.objects.create_user(
+            username='other_hr',
+            password='Hr123456!',
+            organization=self.other_organization,
+            role=User.Role.HR,
+        )
+        self.employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Anna',
+            last_name='Nowak',
+            pesel='12345678901',
+            city='Warszawa',
+            street='Prosta',
+            building_number='1',
+            job_position='Operator',
+        )
+        self.factor = ExposureFactor.objects.create(
+            category=ExposureFactor.Category.PHYSICAL,
+            name='Halas',
+            is_default=True,
+            organization=None,
+        )
+        self.referral = Referral.objects.create(
+            organization=self.organization,
+            employee=self.employee,
+            examination_type=Referral.ExaminationType.INITIAL,
+            job_position='Operator',
+            work_description='Praca przy maszynie',
+            deadline=timezone.localdate() + timedelta(days=7),
+            created_by=self.hr,
+        )
+        ReferralExposure.objects.create(
+            referral=self.referral,
+            exposure_factor=self.factor,
+            exposure_description='Ekspozycja',
+        )
 
     def test_anonymous_user_is_redirected_from_home_to_login(self):
         response = self.client.get(reverse('home'))
@@ -114,7 +150,7 @@ class AccessAndOrganizationTests(TestCase):
             'password2': 'HrUser123!',
         })
 
-        self.assertRedirects(response, reverse('home'))
+        self.assertRedirects(response, reverse('hr_user_list'))
         user = User.objects.get(username='newhr')
         self.assertEqual(user.organization, self.organization)
         self.assertEqual(user.role, User.Role.HR)
@@ -167,6 +203,161 @@ class AccessAndOrganizationTests(TestCase):
 
         self.assertTrue(logged_in)
 
+    def test_hr_gets_403_on_hr_user_list(self):
+        self.client.force_login(self.hr)
+
+        response = self.client.get(reverse('hr_user_list'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_employee_list(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('employee_list'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_employee_create(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('employee_create'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_employee_import(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('employee_import'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_referral_create(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('referral_create'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_status_update(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(
+            reverse('referral_status_update', args=[self.referral.pk]),
+            {'status': Referral.Status.COMPLETED},
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_gets_403_for_referral_pdf(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('referral_pdf', args=[self.referral.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_manager_sees_only_hr_users_from_own_organization(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('hr_user_list'))
+        users = list(response.context['users'])
+
+        self.assertContains(response, self.hr.username)
+        self.assertNotContains(response, self.other_hr.username)
+        self.assertIn(self.hr, users)
+        self.assertNotIn(self.other_hr, users)
+        self.assertNotIn(self.manager, users)
+
+    def test_manager_navigation_hides_hr_modules(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'Konta HR')
+        self.assertNotContains(response, 'Pracownicy')
+        self.assertNotContains(response, 'Nowe skierowanie')
+        self.assertNotContains(response, 'Skierowania')
+
+    def test_hr_navigation_hides_user_management(self):
+        self.client.force_login(self.hr)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'Pracownicy')
+        self.assertNotContains(response, 'Konta HR')
+        self.assertNotContains(response, 'Dodaj HR')
+
+    def test_hr_can_use_full_operational_flow(self):
+        self.client.force_login(self.hr)
+
+        created_employee = self.client.post(reverse('employee_create'), {
+            'first_name': 'Piotr',
+            'last_name': 'Operacyjny',
+            'pesel': '12345678901',
+            'city': 'Warszawa',
+            'street': 'Prosta',
+            'building_number': '1',
+            'job_position': 'Operator',
+        })
+        self.assertRedirects(created_employee, reverse('employee_list'))
+
+        upload = SimpleUploadedFile(
+            'employees.xlsx',
+            make_employee_xlsx([[
+                'Anna',
+                'ImportFlow',
+                '12345678901',
+                '',
+                '',
+                '',
+                '',
+                'Warszawa',
+                'Prosta',
+                '2',
+                '',
+                'Technik',
+                'tak',
+            ]]),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        imported = self.client.post(reverse('employee_import'), {'file': upload})
+        self.assertEqual(imported.status_code, 200)
+        self.assertTrue(Employee.objects.filter(last_name='ImportFlow').exists())
+
+        created_factor = self.client.post(reverse('exposure_factor_create'), {
+            'category': ExposureFactor.Category.OTHER,
+            'name': 'Czynnik flow',
+        })
+        self.assertRedirects(created_factor, reverse('exposure_factor_list'))
+        own_factor = ExposureFactor.objects.get(name='Czynnik flow')
+
+        created_referral = self.client.post(reverse('referral_create'), {
+            'employee': self.employee.pk,
+            'examination_type': Referral.ExaminationType.INITIAL,
+            'job_position': 'Operator',
+            'work_description': 'Praca operacyjna',
+            'deadline': timezone.localdate() + timedelta(days=7),
+            'save_as_template': 'on',
+            'template_name': 'Szablon flow',
+            'exposure_factors': [str(own_factor.pk)],
+            f'exposure_description_{own_factor.pk}': 'Opis narażenia',
+            f'measurement_result_{own_factor.pk}': 'brak',
+        })
+        referral = Referral.objects.exclude(pk=self.referral.pk).get()
+        self.assertRedirects(created_referral, reverse('referral_detail', args=[referral.pk]))
+        self.assertTrue(ReferralTemplate.objects.filter(name='Szablon flow').exists())
+
+        status_response = self.client.post(
+            reverse('referral_status_update', args=[referral.pk]),
+            {'status': Referral.Status.ORDERED},
+        )
+        self.assertRedirects(status_response, reverse('referral_detail', args=[referral.pk]))
+        referral.refresh_from_db()
+        self.assertEqual(referral.status, Referral.Status.ORDERED)
+
+        pdf_response = self.client.get(reverse('referral_pdf', args=[referral.pk]))
+        self.assertEqual(pdf_response.status_code, 200)
+        self.assertTrue(pdf_response.content.startswith(b'%PDF'))
+
 
 class EmployeeTests(TestCase):
     def setUp(self):
@@ -185,16 +376,16 @@ class EmployeeTests(TestCase):
             tax_id='1111111111',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.other_user = User.objects.create_user(
-            username='othermanager',
+            username='otherhr',
             password='Manager123!',
             organization=self.other_organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
 
     def test_user_sees_only_employees_from_own_organization(self):
@@ -386,16 +577,16 @@ class ExposureFactorTests(TestCase):
             tax_id='1111111111',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.other_user = User.objects.create_user(
-            username='othermanager',
+            username='otherhr',
             password='Manager123!',
             organization=self.other_organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.default_factor = ExposureFactor.objects.create(
             category=ExposureFactor.Category.PHYSICAL,
@@ -515,16 +706,16 @@ class ReferralTests(TestCase):
             tax_id='1111111111',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.other_user = User.objects.create_user(
-            username='othermanager',
+            username='otherhr',
             password='Manager123!',
             organization=self.other_organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.employee = Employee.objects.create(
             organization=self.organization,
@@ -809,16 +1000,16 @@ class ReferralPdfTests(TestCase):
             tax_id='1111111111',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.other_user = User.objects.create_user(
-            username='othermanager',
+            username='otherhr',
             password='Manager123!',
             organization=self.other_organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.employee = Employee.objects.create(
             organization=self.organization,
@@ -1002,16 +1193,16 @@ class ValidationStatusEncodingTests(TestCase):
             tax_id='9999999999',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.other_user = User.objects.create_user(
-            username='othermanager',
+            username='otherhr',
             password='Manager123!',
             organization=self.other_organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.employee = Employee.objects.create(
             organization=self.organization,
@@ -1358,10 +1549,10 @@ class ExposureCatalogAndUiTests(TestCase):
             tax_id='0000000000',
         )
         self.user = User.objects.create_user(
-            username='manager',
+            username='hr',
             password='Manager123!',
             organization=self.organization,
-            role=User.Role.MANAGER,
+            role=User.Role.HR,
         )
         self.employee = Employee.objects.create(
             organization=self.organization,
@@ -1411,6 +1602,14 @@ class ExposureCatalogAndUiTests(TestCase):
             ExposureFactor.objects.filter(is_default=True, organization=None).count(),
             first_count,
         )
+
+    def test_seed_creates_demo_hr_user(self):
+        self.seed_catalog()
+
+        hr_user = User.objects.get(username='hr_demo')
+        self.assertEqual(hr_user.role, User.Role.HR)
+        self.assertEqual(hr_user.organization.tax_id, '0000000000')
+        self.assertTrue(hr_user.check_password('HrDemo123!'))
 
     def test_seed_keeps_organization_custom_factors(self):
         custom_factor = ExposureFactor.objects.create(

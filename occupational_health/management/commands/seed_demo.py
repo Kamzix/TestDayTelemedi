@@ -16,7 +16,7 @@ class Command(BaseCommand):
                 'postal_code': '02-697',
             },
         )
-        manager, created = User.objects.get_or_create(
+        manager, manager_created = User.objects.get_or_create(
             username='manager',
             defaults={
                 'organization': organization,
@@ -28,6 +28,18 @@ class Command(BaseCommand):
         manager.role = User.Role.MANAGER
         manager.set_password('Manager123!')
         manager.save()
+        hr_user, hr_created = User.objects.get_or_create(
+            username='hr_demo',
+            defaults={
+                'organization': organization,
+                'role': User.Role.HR,
+                'email': '',
+            },
+        )
+        hr_user.organization = organization
+        hr_user.role = User.Role.HR
+        hr_user.set_password('HrDemo123!')
+        hr_user.save()
 
         default_factors = [
             (ExposureFactor.Category.PHYSICAL, 'Hałas'),
@@ -189,12 +201,16 @@ class Command(BaseCommand):
                 factor.delete()
                 removed_legacy_defaults += 1
 
-        action = 'created' if created else 'updated'
+        action = 'created' if manager_created else 'updated'
+        hr_action = 'created' if hr_created else 'updated'
         self.stdout.write(self.style.SUCCESS(f'Demo manager {action}.'))
+        self.stdout.write(self.style.SUCCESS(f'Demo HR user {hr_action}.'))
         self.stdout.write(f'Default exposure factors present: {len(default_factors)}.')
         self.stdout.write(f'Default exposure factors newly created: {created_factors}.')
         self.stdout.write(f'Legacy default exposure factors removed: {removed_legacy_defaults}.')
         self.stdout.write('Demo login only for local demo environment:')
         self.stdout.write('username: manager')
         self.stdout.write('password: Manager123!')
+        self.stdout.write('username: hr_demo')
+        self.stdout.write('password: HrDemo123!')
         self.stdout.write('organization: Telemedi Demo Employer')
