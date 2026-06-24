@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Pracownicy</title>
+</head>
+<body>
+    <main>
+        <h1>Pracownicy</h1>
+        <p><a href="{% url 'employee_create' %}">Dodaj pracownika</a></p>
+        <p><a href="{% url 'employee_import' %}">Import XLSX</a></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Imie i nazwisko</th>
+                    <th>Stanowisko</th>
+                    <th>Miasto</th>
+                    <th>Status</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                        <td>{{ employee.job_position }}</td>
+                        <td>{{ employee.city }}</td>
+                        <td>{% if employee.active %}aktywny{% else %}nieaktywny{% endif %}</td>
+                        <td><a href="{% url 'employee_edit' employee.pk %}">Edytuj</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">Brak pracownikow.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><a href="{% url 'home' %}">Powrot</a></p>
+    </main>
+</body>
+</html>

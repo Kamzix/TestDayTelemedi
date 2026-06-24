@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Szablony stanowisk</title>
+</head>
+<body>
+    <main>
+        <h1>Szablony stanowisk</h1>
+        <ul>
+            {% for template in templates %}
+                <li>
+                    <strong>{{ template.name }}</strong>
+                    - {{ template.job_position }}
+                    <a href="{% url 'referral_create' %}?template={{ template.pk }}">Uzyj szablonu</a>
+                </li>
+            {% empty %}
+                <li>Brak szablonow.</li>
+            {% endfor %}
+        </ul>
+        <p><a href="{% url 'home' %}">Powrot</a></p>
+    </main>
+</body>
+</html>

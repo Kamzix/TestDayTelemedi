@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Nowe skierowanie</title>
+</head>
+<body>
+    <main>
+        <h1>Nowe skierowanie</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <p>{{ form.template.label_tag }} {{ form.template }}</p>
+            <p>{{ form.employee.label_tag }} {{ form.employee }} {{ form.employee.errors }}</p>
+            <p>{{ form.examination_type.label_tag }} {{ form.examination_type }} {{ form.examination_type.errors }}</p>
+            <p>{{ form.job_position.label_tag }} {{ form.job_position }} {{ form.job_position.errors }}</p>
+            <p>{{ form.work_description.label_tag }} {{ form.work_description }} {{ form.work_description.errors }}</p>
+            <p>{{ form.deadline.label_tag }} {{ form.deadline }} {{ form.deadline.errors }}</p>
+            <p>{{ form.save_as_template.label_tag }} {{ form.save_as_template }}</p>
+            <p>{{ form.template_name.label_tag }} {{ form.template_name }} {{ form.template_name.errors }}</p>
+
+            <h2>Czynniki narazenia</h2>
+            {% for category_label, rows in grouped_factor_rows %}
+                <section>
+                    <h3>{{ category_label }}</h3>
+                    {% for row in rows %}
+                        <fieldset>
+                            <legend>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="exposure_factors"
+                                        value="{{ row.factor.pk }}"
+                                        {% if row.selected %}checked{% endif %}
+                                    >
+                                    {{ row.factor.name }}
+                                    {% if row.factor.is_default %}(domyslny){% else %}(wlasny){% endif %}
+                                </label>
+                            </legend>
+                            <p>
+                                <label for="exposure_description_{{ row.factor.pk }}">Opis narazenia</label>
+                                <textarea id="exposure_description_{{ row.factor.pk }}" name="exposure_description_{{ row.factor.pk }}">{{ row.description }}</textarea>
+                            </p>
+                            <p>
+                                <label for="measurement_result_{{ row.factor.pk }}">Wynik pomiaru</label>
+                                <input id="measurement_result_{{ row.factor.pk }}" name="measurement_result_{{ row.factor.pk }}" value="{{ row.measurement }}">
+                            </p>
+                        </fieldset>
+                    {% empty %}
+                        <p>Brak czynnikow w tej kategorii.</p>
+                    {% endfor %}
+                </section>
+            {% endfor %}
+
+            <button type="submit">Zapisz skierowanie</button>
+        </form>
+        <p><a href="{% url 'home' %}">Powrot</a></p>
+    </main>
+</body>
+</html>

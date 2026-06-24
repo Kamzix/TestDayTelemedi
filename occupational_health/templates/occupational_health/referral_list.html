@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Skierowania</title>
+</head>
+<body>
+    <main>
+        <h1>Skierowania</h1>
+        <p><a href="{% url 'referral_create' %}">Nowe skierowanie</a></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pracownik</th>
+                    <th>Typ badania</th>
+                    <th>Stanowisko</th>
+                    <th>Termin</th>
+                    <th>Utworzono</th>
+                    <th>Status</th>
+                    <th>Autor</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referral in referrals %}
+                    <tr>
+                        <td>{{ referral.employee.first_name }} {{ referral.employee.last_name }}</td>
+                        <td>{{ referral.get_examination_type_display }}</td>
+                        <td>{{ referral.job_position }}</td>
+                        <td>
+                            {{ referral.deadline }}
+                            {% if referral.is_overdue %}<strong>PRZETERMINOWANE</strong>{% endif %}
+                        </td>
+                        <td>{{ referral.created_at }}</td>
+                        <td>{{ referral.get_status_display }}</td>
+                        <td>{{ referral.created_by.username }}</td>
+                        <td>
+                            <a href="{% url 'referral_detail' referral.pk %}">Szczegoly</a>
+                            <a href="{% url 'referral_pdf' referral.pk %}">PDF</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">Brak skierowan.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><a href="{% url 'home' %}">Powrot</a></p>
+    </main>
+</body>
+</html>

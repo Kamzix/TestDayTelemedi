@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Szczegoly skierowania</title>
+</head>
+<body>
+    <main>
+        <h1>Szczegoly skierowania</h1>
+        <p>Pracownik: {{ referral.employee.first_name }} {{ referral.employee.last_name }}</p>
+        <p>Typ badania: {{ referral.get_examination_type_display }}</p>
+        <p>Stanowisko: {{ referral.job_position }}</p>
+        <p>Opis pracy: {{ referral.work_description }}</p>
+        <p>Termin: {{ referral.deadline }}</p>
+        <p>Status: {{ referral.get_status_display }}</p>
+        <p><a href="{% url 'referral_pdf' referral.pk %}">Pobierz PDF</a></p>
+
+        <h2>Czynniki narazenia</h2>
+        <ul>
+            {% for exposure in referral.exposures.all %}
+                <li>
+                    <strong>{{ exposure.exposure_factor.name }}</strong>
+                    <p>Opis: {{ exposure.exposure_description }}</p>
+                    <p>Wynik pomiaru: {{ exposure.measurement_result|default:"-" }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+        <p><a href="{% url 'referral_list' %}">Powrot do listy</a></p>
+    </main>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <title>Telemedi Occupational Health MVP</title>
+</head>
+<body>
+    <main>
+        <h1>Telemedi Occupational Health MVP</h1>
+        <p>Uzytkownik: {{ request.user.get_full_name|default:request.user.username }}</p>
+        <p>Rola: {{ request.user.role }}</p>
+        <p>Organizacja: {{ request.user.organization.name }}</p>
+
+        {% if request.user.role == "MANAGER" %}
+            <p><a href="{% url 'create_hr_user' %}">Utworz konto HR</a></p>
+        {% endif %}
+        <p><a href="{% url 'employee_list' %}">Lista pracownikow</a></p>
+        <p><a href="{% url 'employee_create' %}">Dodaj pracownika</a></p>
+        <p><a href="{% url 'exposure_factor_list' %}">Czynniki narazenia</a></p>
+        <p><a href="{% url 'referral_create' %}">Nowe skierowanie</a></p>
+        <p><a href="{% url 'referral_list' %}">Lista skierowan</a></p>
+        <p><a href="{% url 'referral_template_list' %}">Szablony stanowisk</a></p>
+
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Wyloguj</button>
+        </form>
+    </main>
+</body>
+</html>
