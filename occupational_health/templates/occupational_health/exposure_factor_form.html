@@ -4,10 +4,26 @@
 
 {% block content %}
     <h1>Dodaj czynnik narażenia</h1>
-    <form method="post">
+    <form class="form-card" method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zapisz</button>
-        <a class="button secondary" href="{% url 'exposure_factor_list' %}">Powrót</a>
+        <div class="field-error">{{ form.non_field_errors }}</div>
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="{{ form.category.id_for_label }}">Kategoria</label>
+                {{ form.category }}
+                <div class="field-error">{{ form.category.errors }}</div>
+            </div>
+            <div class="form-field">
+                <label for="{{ form.name.id_for_label }}">Nazwa</label>
+                {{ form.name }}
+                <div class="field-error">{{ form.name.errors }}</div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Zapisz</button>
+            <a class="button secondary" href="{% url 'exposure_factor_list' %}">Powrót</a>
+        </div>
     </form>
 {% endblock %}

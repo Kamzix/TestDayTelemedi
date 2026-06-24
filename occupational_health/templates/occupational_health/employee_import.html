@@ -4,10 +4,21 @@
 
 {% block content %}
     <h1>Import pracowników</h1>
-    <form method="post" enctype="multipart/form-data">
+    <form class="form-card" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Importuj</button>
+        <div class="field-error">{{ form.non_field_errors }}</div>
+
+        <div class="form-grid">
+            <div class="form-field form-field--full">
+                <label for="{{ form.file.id_for_label }}">Plik XLSX</label>
+                {{ form.file }}
+                <div class="field-error">{{ form.file.errors }}</div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Importuj</button>
+        </div>
     </form>
 
     {% if result %}

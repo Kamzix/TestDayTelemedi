@@ -4,24 +4,26 @@
 
 {% block content %}
     <div class="auth-shell">
-        <form class="auth-card" method="post">
+        <form class="form-card auth-card" method="post">
             {% csrf_token %}
             <h1>Logowanie</h1>
-            {{ form.non_field_errors }}
+            <div class="field-error">{{ form.non_field_errors }}</div>
 
             <div class="form-field">
                 <label for="{{ form.username.id_for_label }}">Login</label>
                 {{ form.username }}
-                {{ form.username.errors }}
+                <div class="field-error">{{ form.username.errors }}</div>
             </div>
 
             <div class="form-field">
                 <label for="{{ form.password.id_for_label }}">Hasło</label>
                 {{ form.password }}
-                {{ form.password.errors }}
+                <div class="field-error">{{ form.password.errors }}</div>
             </div>
 
-            <button class="form-submit" type="submit">Zaloguj</button>
+            <div class="form-actions">
+                <button class="form-submit" type="submit">Zaloguj</button>
+            </div>
         </form>
     </div>
 {% endblock %}

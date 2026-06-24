@@ -11,15 +11,21 @@
         <p>Opis pracy: {{ referral.work_description }}</p>
         <p>Termin: {{ referral.deadline }}</p>
         <p>Status: <span class="badge status">{{ referral.get_status_display }}</span></p>
-        <form class="inline-form" method="post" action="{% url 'referral_status_update' referral.pk %}">
+        <form class="form-card status-card" method="post" action="{% url 'referral_status_update' referral.pk %}">
             {% csrf_token %}
-            <label for="status-detail">Zmień status</label>
-            <select id="status-detail" name="status">
-                {% for value, label in status_choices %}
-                    <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <button class="secondary" type="submit">Zapisz status</button>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="status-detail">Zmień status</label>
+                    <select id="status-detail" name="status">
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="secondary" type="submit">Zapisz status</button>
+            </div>
         </form>
         <p><a class="button secondary" href="{% url 'referral_pdf' referral.pk %}">Pobierz PDF</a></p>
     </section>

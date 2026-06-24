@@ -32,15 +32,19 @@
                         <td>{{ referral.created_at }}</td>
                         <td>
                             <span class="badge status">{{ referral.get_status_display }}</span>
-                            <form class="inline-form" method="post" action="{% url 'referral_status_update' referral.pk %}">
+                            <form class="status-inline-form" method="post" action="{% url 'referral_status_update' referral.pk %}">
                                 {% csrf_token %}
-                                <label class="sr-only" for="status-list-{{ referral.pk }}">Status</label>
-                                <select id="status-list-{{ referral.pk }}" name="status">
-                                    {% for value, label in status_choices %}
-                                        <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button class="secondary" type="submit">Zmień</button>
+                                <div class="form-field">
+                                    <label class="sr-only" for="status-list-{{ referral.pk }}">Status</label>
+                                    <select id="status-list-{{ referral.pk }}" name="status">
+                                        {% for value, label in status_choices %}
+                                            <option value="{{ value }}" {% if referral.status == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="secondary" type="submit">Zmień</button>
+                                </div>
                             </form>
                         </td>
                         <td>{{ referral.created_by.username }}</td>

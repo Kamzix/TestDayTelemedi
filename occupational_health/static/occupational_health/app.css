@@ -208,8 +208,11 @@ button.danger {
     margin-top: 0.25rem;
 }
 
-.auth-card .errorlist,
-.employee-card .errorlist {
+.field-error:empty {
+    display: none;
+}
+
+.field-error .errorlist {
     list-style-position: inside;
     margin: 0.25rem 0 0;
     padding: 0;
@@ -222,11 +225,14 @@ button.danger {
     min-height: calc(100vh - 190px);
 }
 
-.auth-card {
+.form-card {
     display: grid;
     gap: 1rem;
-    max-width: 460px;
     padding: 1.5rem;
+}
+
+.auth-card {
+    max-width: 440px;
     width: 100%;
 }
 
@@ -240,10 +246,9 @@ button.danger {
     gap: 0.3rem;
 }
 
-.auth-card input,
-.employee-card input:not([type="checkbox"]),
-.employee-card select,
-.employee-card textarea {
+.form-card input:not([type="checkbox"]),
+.form-card select,
+.form-card textarea {
     width: 100%;
 }
 
@@ -253,27 +258,28 @@ button.danger {
     width: 100%;
 }
 
-.employee-card {
+.form-card:not(.auth-card) {
     max-width: 920px;
 }
 
-.employee-form-grid {
+.form-grid {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.form-field-wide,
+.form-field--full,
 .checkbox-field,
 .form-actions {
     grid-column: 1 / -1;
 }
 
 .checkbox-field {
-    align-items: center;
+    align-items: flex-start;
     border: 1px solid var(--border);
     border-radius: 6px;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.6rem;
     padding: 0.65rem 0.75rem;
 }
@@ -284,7 +290,12 @@ button.danger {
 
 .checkbox-field input {
     height: 1.1rem;
+    margin-top: 0.15rem;
     width: 1.1rem;
+}
+
+.checkbox-field .field-error {
+    flex-basis: 100%;
 }
 
 .form-actions {
@@ -298,6 +309,47 @@ button.danger {
 .form-actions button {
     min-width: 8rem;
     text-align: center;
+}
+
+.form-section {
+    border-top: 1px solid var(--border);
+    padding-top: 0.25rem;
+}
+
+.status-card {
+    margin-top: 0.75rem;
+    max-width: 420px;
+    padding: 0.9rem;
+}
+
+.status-card .form-grid {
+    grid-template-columns: 1fr;
+}
+
+.status-card .form-actions {
+    margin-top: 0;
+}
+
+.status-inline-form {
+    background: transparent;
+    border: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    padding: 0;
+}
+
+.status-inline-form .form-field {
+    min-width: 10rem;
+}
+
+.status-inline-form .form-actions {
+    margin: 0;
+}
+
+.status-inline-form .form-actions button {
+    min-width: auto;
 }
 
 .disclaimer {
@@ -332,6 +384,17 @@ summary {
     padding-top: 0.75rem;
 }
 
+.factor-choice {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0;
+}
+
+.factor-choice input {
+    margin-top: 0.25rem;
+}
+
 .sr-only {
     height: 1px;
     margin: -1px;
@@ -350,7 +413,7 @@ summary {
         padding: 1rem;
     }
 
-    .employee-form-grid {
+    .form-grid {
         grid-template-columns: 1fr;
     }
 
