@@ -19,6 +19,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 from occupational_health.views import (
     create_hr_user,
+    delete_hr_user,
     employee_create,
     employee_delete,
     employee_edit,
@@ -43,6 +44,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('users/', hr_user_list, name='hr_user_list'),
     path('users/create/', create_hr_user, name='create_hr_user'),
+    path('users/<int:pk>/delete/', delete_hr_user, name='delete_hr_user'),
     path('employees/', employee_list, name='employee_list'),
     path('employees/create/', employee_create, name='employee_create'),
     path('employees/<int:pk>/edit/', employee_edit, name='employee_edit'),

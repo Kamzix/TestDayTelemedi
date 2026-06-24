@@ -203,6 +203,56 @@ class AccessAndOrganizationTests(TestCase):
 
         self.assertTrue(logged_in)
 
+    def test_manager_deletes_hr_user_from_own_organization(self):
+        user = User.objects.create_user(
+            username='deletehr',
+            password='Hr123456!',
+            organization=self.organization,
+            role=User.Role.HR,
+        )
+        self.client.force_login(self.manager)
+
+        response = self.client.post(reverse('delete_hr_user', args=[user.pk]))
+
+        self.assertRedirects(response, reverse('hr_user_list'))
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+
+    def test_manager_cannot_delete_hr_user_from_other_organization(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(reverse('delete_hr_user', args=[self.other_hr.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(User.objects.filter(pk=self.other_hr.pk).exists())
+
+    def test_hr_gets_403_on_hr_user_delete(self):
+        self.client.force_login(self.hr)
+
+        response = self.client.post(reverse('delete_hr_user', args=[self.hr.pk]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.filter(pk=self.hr.pk).exists())
+
+    def test_manager_get_does_not_delete_hr_user(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('delete_hr_user', args=[self.hr.pk]))
+
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(User.objects.filter(pk=self.hr.pk).exists())
+
+    def test_manager_cannot_delete_hr_user_with_related_referrals(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(
+            reverse('delete_hr_user', args=[self.hr.pk]),
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse('hr_user_list'))
+        self.assertTrue(User.objects.filter(pk=self.hr.pk).exists())
+        self.assertContains(response, 'Nie mo\u017cna usun\u0105\u0107 konta HR')
+
     def test_hr_gets_403_on_hr_user_list(self):
         self.client.force_login(self.hr)
 
@@ -270,6 +320,7 @@ class AccessAndOrganizationTests(TestCase):
         users = list(response.context['users'])
 
         self.assertContains(response, self.hr.username)
+        self.assertContains(response, 'Usu&#324;')
         self.assertNotContains(response, self.other_hr.username)
         self.assertIn(self.hr, users)
         self.assertNotIn(self.other_hr, users)

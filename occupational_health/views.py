@@ -79,6 +79,27 @@ def create_hr_user(request):
     return render(request, 'occupational_health/create_hr_user.html', {'form': form})
 
 
+@role_required(User.Role.MANAGER)
+@require_POST
+def delete_hr_user(request, pk):
+    user = get_object_or_404(
+        User,
+        pk=pk,
+        organization=request.user.organization,
+        role=User.Role.HR,
+    )
+    username = user.username
+
+    try:
+        user.delete()
+    except ProtectedError:
+        messages.error(request, 'Nie mo\u017cna usun\u0105\u0107 konta HR, kt\u00f3re ma powi\u0105zane dane.')
+    else:
+        messages.success(request, f'Usuni\u0119to konto HR: {username}.')
+
+    return redirect('hr_user_list')
+
+
 @role_required(User.Role.HR)
 def employee_list(request):
     employees = Employee.objects.filter(
