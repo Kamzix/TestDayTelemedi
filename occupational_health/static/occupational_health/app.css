@@ -124,6 +124,25 @@ th {
     background: #eef3f8;
 }
 
+.actions-column {
+    width: 170px;
+    white-space: nowrap;
+}
+
+.table-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-wrap: normal;
+    white-space: nowrap;
+}
+
+.table-actions .button,
+.table-actions button {
+    padding: 0.35rem 0.6rem;
+}
+
 label {
     display: inline-block;
     font-weight: 600;
@@ -201,6 +220,11 @@ button.danger {
 .message.success {
     background: var(--success-bg);
     color: var(--success-text);
+}
+
+.message.error {
+    background: #fee4e2;
+    color: var(--danger);
 }
 
 .errorlist {

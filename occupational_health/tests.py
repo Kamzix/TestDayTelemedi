@@ -231,6 +231,14 @@ class AccessAndOrganizationTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_manager_gets_403_for_employee_delete(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(reverse('employee_delete', args=[self.employee.pk]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Employee.objects.filter(pk=self.employee.pk).exists())
+
     def test_manager_gets_403_for_referral_create(self):
         self.client.force_login(self.manager)
 
@@ -432,6 +440,69 @@ class EmployeeTests(TestCase):
         response = self.client.get(reverse('employee_edit', args=[employee.pk]))
 
         self.assertEqual(response.status_code, 404)
+
+    def test_user_deletes_employee_from_own_organization(self):
+        employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Adam',
+            last_name='Kasprzak',
+            pesel='12345678901',
+            city='Warszawa',
+            street='Prosta',
+            building_number='3',
+            job_position='Operator',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('employee_delete', args=[employee.pk]))
+
+        self.assertRedirects(response, reverse('employee_list'))
+        self.assertFalse(Employee.objects.filter(pk=employee.pk).exists())
+
+    def test_user_gets_404_when_deleting_employee_from_other_organization(self):
+        employee = Employee.objects.create(
+            organization=self.other_organization,
+            first_name='Jan',
+            last_name='Kowalski',
+            pesel='10987654321',
+            city='Krakow',
+            street='Dluga',
+            building_number='2',
+            job_position='Manager',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('employee_delete', args=[employee.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+
+    def test_employee_with_referral_is_not_deleted(self):
+        employee = Employee.objects.create(
+            organization=self.organization,
+            first_name='Adam',
+            last_name='Chroniony',
+            pesel='12345678901',
+            city='Warszawa',
+            street='Prosta',
+            building_number='3',
+            job_position='Operator',
+        )
+        Referral.objects.create(
+            organization=self.organization,
+            employee=employee,
+            examination_type=Referral.ExaminationType.INITIAL,
+            job_position='Operator',
+            work_description='Praca przy maszynie',
+            deadline=timezone.localdate() + timedelta(days=7),
+            created_by=self.user,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('employee_delete', args=[employee.pk]))
+
+        self.assertRedirects(response, reverse('employee_list'))
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
 
     def test_create_form_ignores_posted_organization(self):
         self.client.force_login(self.user)

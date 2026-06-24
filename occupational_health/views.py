@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -130,6 +131,26 @@ def employee_edit(request, pk):
         'form': form,
         'title': 'Edytuj pracownika',
     })
+
+
+@role_required(User.Role.HR)
+@require_POST
+def employee_delete(request, pk):
+    employee = get_object_or_404(
+        Employee,
+        pk=pk,
+        organization=request.user.organization,
+    )
+    employee_name = f'{employee.first_name} {employee.last_name}'
+
+    try:
+        employee.delete()
+    except ProtectedError:
+        messages.error(request, 'Nie mozna usunac pracownika, ktory ma skierowania.')
+    else:
+        messages.success(request, f'Usunieto pracownika: {employee_name}.')
+
+    return redirect('employee_list')
 
 
 @role_required(User.Role.HR)

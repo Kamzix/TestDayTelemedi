@@ -20,6 +20,7 @@ from django.urls import path
 from occupational_health.views import (
     create_hr_user,
     employee_create,
+    employee_delete,
     employee_edit,
     employee_import,
     employee_list,
@@ -45,6 +46,7 @@ urlpatterns = [
     path('employees/', employee_list, name='employee_list'),
     path('employees/create/', employee_create, name='employee_create'),
     path('employees/<int:pk>/edit/', employee_edit, name='employee_edit'),
+    path('employees/<int:pk>/delete/', employee_delete, name='employee_delete'),
     path('employees/import/', employee_import, name='employee_import'),
     path('exposure-factors/', exposure_factor_list, name='exposure_factor_list'),
     path('exposure-factors/create/', exposure_factor_create, name='exposure_factor_create'),

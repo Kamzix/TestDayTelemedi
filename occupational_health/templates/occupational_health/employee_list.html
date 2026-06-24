@@ -16,7 +16,7 @@
                     <th>Stanowisko</th>
                     <th>Miasto</th>
                     <th>Status</th>
-                    <th>Akcje</th>
+                    <th class="actions-column">Akcje</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +26,13 @@
                         <td>{{ employee.job_position }}</td>
                         <td>{{ employee.city }}</td>
                         <td>{% if employee.active %}aktywny{% else %}nieaktywny{% endif %}</td>
-                        <td><a href="{% url 'employee_edit' employee.pk %}">Edytuj</a></td>
+                        <td class="table-actions">
+                            <a class="button secondary" href="{% url 'employee_edit' employee.pk %}">Edytuj</a>
+                            <form class="inline-form" method="post" action="{% url 'employee_delete' employee.pk %}">
+                                {% csrf_token %}
+                                <button class="danger" type="submit">Usun</button>
+                            </form>
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
