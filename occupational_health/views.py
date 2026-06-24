@@ -146,9 +146,9 @@ def employee_delete(request, pk):
     try:
         employee.delete()
     except ProtectedError:
-        messages.error(request, 'Nie mozna usunac pracownika, ktory ma skierowania.')
+        messages.error(request, 'Nie mo\u017cna usun\u0105\u0107 pracownika, kt\u00f3ry ma skierowania.')
     else:
-        messages.success(request, f'Usunieto pracownika: {employee_name}.')
+        messages.success(request, f'Usuni\u0119to pracownika: {employee_name}.')
 
     return redirect('employee_list')
 

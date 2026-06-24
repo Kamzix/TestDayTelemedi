@@ -30,7 +30,7 @@
                             <a class="button secondary" href="{% url 'employee_edit' employee.pk %}">Edytuj</a>
                             <form class="inline-form" method="post" action="{% url 'employee_delete' employee.pk %}">
                                 {% csrf_token %}
-                                <button class="danger" type="submit">Usun</button>
+                                <button class="danger" type="submit">Usu&#324;</button>
                             </form>
                         </td>
                     </tr>
